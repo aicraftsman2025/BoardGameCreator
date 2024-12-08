@@ -220,7 +220,9 @@ class PropertiesPanel(ctk.CTkFrame):
             'dimensions': {
                 'width': int(self.width_var.get()),
                 'height': int(self.height_var.get())
-            }
+            },
+            'unit': self.unit_var.get(),
+            'dpi': int(self.dpi_var.get())
         })
     
     def _subscribe_to_events(self):

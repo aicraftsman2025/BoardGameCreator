@@ -48,7 +48,7 @@ class QRCodeDialog(ctk.CTkToplevel):
             anchor="w"
         ).pack(side="left", padx=(0, 10))
         
-        self.size_var = ctk.StringVar(value="200")
+        self.size_var = ctk.StringVar(value="120")
         size_entry = ctk.CTkEntry(
             size_frame,
             textvariable=self.size_var,
@@ -95,7 +95,7 @@ class QRCodeDialog(ctk.CTkToplevel):
                 'width': size,
                 'height': size,
                 'fill': 'black',
-                'background': 'white'
+                'background': None
             }
             
             # Call save callback

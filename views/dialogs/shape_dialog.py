@@ -170,4 +170,4 @@ class ShapeDialog:
             self.on_save(properties)
             self.dialog.destroy()
         except ValueError as e:
-            messagebox.showerror("Invalid Input", "Please enter valid numbers for size, border width, and radius.")
+            ctk.CTkMessagebox(title="Invalid Input", message="Please enter valid numbers for size, border width, and radius.", icon="cancel")

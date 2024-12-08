@@ -4,6 +4,7 @@ from views.component_editor import ComponentEditor
 from views.asset_manager import AssetManager
 from views.settings_view import SettingsView
 from views.template_manager import TemplateManager
+from views.components_manager import ComponentsManager
 
 class MainView(ctk.CTkFrame):
     def __init__(self, parent, controllers):
@@ -64,27 +65,35 @@ class MainView(ctk.CTkFrame):
         )
         self.nav_buttons["component"].grid(row=2, column=0, padx=20, pady=5)
         
+        # Components Manager Button
+        self.nav_buttons["components"] = ctk.CTkButton(
+            self.sidebar,
+            text="Components Manager",
+            command=lambda: self.show_view("components")
+        )
+        self.nav_buttons["components"].grid(row=3, column=0, padx=20, pady=5)
+        
         # Asset Manager Button
         self.nav_buttons["asset"] = ctk.CTkButton(
             self.sidebar,
             text="Asset Manager",
             command=lambda: self.show_view("asset")
         )
-        self.nav_buttons["asset"].grid(row=3, column=0, padx=20, pady=5)
+        self.nav_buttons["asset"].grid(row=4, column=0, padx=20, pady=5)
          # Template Manager Button
         self.nav_buttons["template"] = ctk.CTkButton(
             self.sidebar,
             text="Template Manager",
             command=lambda: self.show_view("template")
         )
-        self.nav_buttons["template"].grid(row=4, column=0, padx=20, pady=5)
+        self.nav_buttons["template"].grid(row=5, column=0, padx=20, pady=5)
         # Settings Button (at bottom)
         self.nav_buttons["settings"] = ctk.CTkButton(
             self.sidebar,
             text="Settings",
             command=lambda: self.show_view("settings")
         )
-        self.nav_buttons["settings"].grid(row=5, column=0, padx=20, pady=20, sticky="s")
+        self.nav_buttons["settings"].grid(row=6, column=0, padx=20, pady=20, sticky="s")
         
         
     def _create_content_area(self):
@@ -133,6 +142,12 @@ class MainView(ctk.CTkFrame):
         elif view_name == "template":
             self.current_view = TemplateManager(
                 self.content_frame,
+                self.controllers['template']
+            )
+        elif view_name == "components":
+            self.current_view = ComponentsManager(
+                self.content_frame,
+                self.controllers['component'],
                 self.controllers['template']
             )       
         

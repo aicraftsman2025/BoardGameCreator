@@ -11,6 +11,8 @@ import qrcode
 from utils.image_processor import ImageProcessor
 import tkinter as tk
 import os
+import json
+import tkinter.messagebox as messagebox
 
 
 class ComponentEditor(ctk.CTkFrame):
@@ -315,92 +317,127 @@ class ComponentEditor(ctk.CTkFrame):
     def _handle_save_component(self, data):
         """Handle component save"""
         try:
-            dialog = ctk.CTkToplevel(self)
-            dialog.title("Save Component")
-            self.center_dialog(dialog, width=400, height=200)
-            
-            # Create input frame
-            input_frame = ctk.CTkFrame(dialog)
-            input_frame.pack(fill="both", expand=True, padx=20, pady=20)
-            
-            # Component name input
-            ctk.CTkLabel(
-                input_frame,
-                text="Component Name:",
-                anchor="w"
-            ).pack(fill="x", pady=(0, 5))
-            
-            name_var = ctk.StringVar(value=f"New {data['type'].capitalize()}")
-            name_entry = ctk.CTkEntry(
-                input_frame,
-                textvariable=name_var,
-                width=300
-            )
-            name_entry.pack(pady=(0, 15))
-            
-            def save_with_name():
-                name = name_var.get().strip()
-                if not name:
-                    self.show_message("Error", "Component name is required")
-                    return
-                
+            # Check if we're editing an existing component
+            existing_component = getattr(self, 'current_component', None)
+            print(f"Existing component: {existing_component}")
+            if existing_component:
+                # Update existing component
                 try:
-                    # Import project_id from project_view
-                    from views.project_view import project_id
-                    
                     # Store all component data in properties
                     properties = {
                         'width': data['dimensions']['width'],
                         'height': data['dimensions']['height'],
-                        'elements': self.element_manager.elements,  # Store all elements
-                        'background_color': self.canvas_manager.background_color,  # Store background color
-                        'dimensions': data['dimensions']  # Store original dimensions
+                        'unit': data['unit'],
+                        'dpi': data['dpi'],
+                        'elements': self.element_manager.elements,
+                        'background_color': self.canvas_manager.background_color,
+                        'dimensions': data['dimensions']
                     }
                     
+                    # Update component data
                     component_data = {
-                        'name': name,  # Use the entered name
-                        'type': data['type'],
-                        'properties': properties  # All data stored in properties
+                        'name': existing_component['name'],
+                        'type': existing_component['type'],
+                        'properties': properties
                     }
                     
-                    # Create component using both project_id and component_data
-                    if hasattr(self, 'component_controller') and self.component_controller:
+                    # Update component in database
+                    self.component_controller.update_component(
+                        component_id=existing_component['id'],
+                        component_data=component_data
+                    )
+                    
+                    self.show_message("Success", f"Component '{existing_component['name']}' updated successfully!")
+                    
+                except Exception as e:
+                    print(f"Error updating component: {e}")
+                    self.show_message("Error", f"Failed to update component: {str(e)}")
+                    
+            else:
+                # Show dialog for new component
+                dialog = ctk.CTkToplevel(self)
+                dialog.title("Save Component")
+                self.center_dialog(dialog, width=400, height=200)
+                
+                # Create input frame
+                input_frame = ctk.CTkFrame(dialog)
+                input_frame.pack(fill="both", expand=True, padx=20, pady=20)
+                
+                # Component name input
+                ctk.CTkLabel(
+                    input_frame,
+                    text="Component Name:",
+                    anchor="w"
+                ).pack(fill="x", pady=(0, 5))
+                
+                name_var = ctk.StringVar(value=f"New {data['type'].capitalize()}")
+                name_entry = ctk.CTkEntry(
+                    input_frame,
+                    textvariable=name_var,
+                    width=300
+                )
+                name_entry.pack(pady=(0, 15))
+                
+                def save_with_name():
+                    name = name_var.get().strip()
+                    if not name:
+                        self.show_message("Error", "Component name is required")
+                        return
+                    
+                    try:
+                        # Import project_id from project_view
+                        from views.project_view import project_id
+                        
+                        # Store all component data in properties
+                        properties = {
+                            'width': data['dimensions']['width'],
+                            'height': data['dimensions']['height'],
+                            'unit': data['unit'],
+                            'dpi': data['dpi'],
+                            'elements': self.element_manager.elements,
+                            'background_color': self.canvas_manager.background_color,
+                            'dimensions': data['dimensions']
+                        }
+                        
+                        component_data = {
+                            'name': name,
+                            'type': data['type'],
+                            'properties': properties
+                        }
+                        
+                        # Create new component
                         self.component_controller.create_component(
                             project_id=project_id,
                             component_data=component_data
                         )
                         dialog.destroy()
                         self.show_message("Success", f"Component '{name}' saved successfully!")
-                    else:
-                        print("Error: Component controller not properly initialized")
                         
-                except Exception as e:
-                    print(f"Error saving component: {e}")
-                    import traceback
-                    traceback.print_exc()
-            
-            # Buttons frame
-            button_frame = ctk.CTkFrame(input_frame)
-            button_frame.pack(fill="x", pady=(0, 10))
-            
-            # Save button
-            ctk.CTkButton(
-                button_frame,
-                text="Save",
-                command=save_with_name
-            ).pack(side="left", padx=5)
-            
-            # Cancel button
-            ctk.CTkButton(
-                button_frame,
-                text="Cancel",
-                command=dialog.destroy
-            ).pack(side="right", padx=5)
-            
+                    except Exception as e:
+                        print(f"Error saving component: {e}")
+                        self.show_message("Error", f"Failed to save component: {str(e)}")
+                
+                # Buttons frame
+                button_frame = ctk.CTkFrame(input_frame)
+                button_frame.pack(fill="x", pady=(0, 10))
+                
+                # Save button
+                ctk.CTkButton(
+                    button_frame,
+                    text="Save",
+                    command=save_with_name
+                ).pack(side="left", padx=5)
+                
+                # Cancel button
+                ctk.CTkButton(
+                    button_frame,
+                    text="Cancel",
+                    command=dialog.destroy
+                ).pack(side="right", padx=5)
+                
         except Exception as e:
             print(f"Error showing save dialog: {e}")
-            import traceback
-            traceback.print_exc()
+            self.show_message("Error", f"Failed to show save dialog: {str(e)}")
     
     def show_message(self, title: str, message: str):
         """Show a message dialog"""
@@ -564,3 +601,68 @@ class ComponentEditor(ctk.CTkFrame):
             except Exception as e2:
                 print(f"Error with alternative method: {e2}")
                 raise
+    
+    def load_component(self, component):
+        """Load component data into editor"""
+        try:
+            # Clear current canvas and elements
+            #self.canvas_manager.clear_canvas()
+            self.element_manager.elements.clear()
+            
+            print(f"Loading component: {component}")  # Debug print
+            
+            # Load properties
+            properties = json.loads(component['properties']) if isinstance(component['properties'], str) else component['properties']
+            print(f"Parsed properties: {properties}")  # Debug print
+            
+            # Set canvas dimensions from properties
+            width = properties.get('width', 800)
+            height = properties.get('height', 600)
+            unit = properties.get('unit', 'mm')
+            dpi = properties.get('dpi', 96)
+            self.current_component = component
+            
+            # Check for dimensions in nested structure
+            if 'dimensions' in properties:
+                width = properties['dimensions'].get('width', width)
+                height = properties['dimensions'].get('height', height)
+            
+            # Set canvas properties
+            #self.canvas_manager.resize_canvas(width, height)
+            
+            # Set background color
+            if 'background_color' in properties:
+                bg_color = properties['background_color']
+                self.canvas_manager.background_color = bg_color
+                self.canvas_manager.canvas.configure(bg=bg_color)
+            
+            # Load elements
+            if 'elements' in properties:
+                for element in properties['elements']:
+                    print(f"Loading element: {element}")  # Debug print
+                    
+                    # Add to element manager
+                    self.element_manager.elements.append(element)
+                    
+                    # Draw element on canvas
+                    self.canvas_manager._draw_element(element)
+            
+            # Update UI
+            #self.update_ui()
+            self.canvas_manager._handle_size_changed({
+                'width': width,
+                'height': height,
+                'unit': unit,
+                'dpi': dpi,
+                'physical_width': width,
+                'physical_height': height,
+                'physical_unit': unit,
+            })
+            
+            print("Component loaded successfully")  # Debug print
+            
+        except Exception as e:
+            print(f"Error loading component: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Error", f"Failed to load component: {str(e)}")

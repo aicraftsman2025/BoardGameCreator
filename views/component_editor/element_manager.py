@@ -98,11 +98,11 @@ class ElementManager:
             }
         elif element_type == 'qrcode':
             return {
-                'width': 200,
-                'height': 200,
-                'content': 'https://example.com',
+                'width': 120,
+                'height': 120,
+                'content': 'https://tomobit.com',
                 'fill': 'black',
-                'background': 'white'
+                'background': None
             }
         return {}
     
