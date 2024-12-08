@@ -3,12 +3,14 @@ import json
 from datetime import datetime
 from models.template import Template
 from models.template_manager import TemplateManager
+from controllers.component_controller import ComponentController
 from typing import Optional, List
+import pandas as pd
 
 class TemplateController:
     def __init__(self, db_manager):
         self.template_manager = TemplateManager(db_manager)
-    
+        self.component_controller = ComponentController(db_manager)
     def save_template(self, name: str, template_data: dict) -> bool:
         """Save a component template"""
         return self.template_manager.save_template(name, template_data)
@@ -100,3 +102,90 @@ class TemplateController:
     def edit_template(self, template_id: str, template_data: dict) -> bool:
         """Edit an existing template"""
         return self.update_template(template_id, template_data)
+    
+    def create_from_csv(self, template_name: str, csv_file: str, mappings: dict) -> bool:
+        """Create components from CSV data source"""
+        try:
+            # Load template
+            template = self.load_template(template_name)
+            if not template:
+                return False
+            
+            # Load CSV data
+            data_path = os.path.join("./assets/data", csv_file)
+            df = pd.read_csv(data_path)
+            
+            # Create components for each row
+            components = []
+            for _, row in df.iterrows():
+                component_data = template.copy()
+                
+                # Apply mappings
+                for csv_col, template_field in mappings.items():
+                    # Find and update the element with matching field
+                    for element in component_data['elements']:
+                        if element.get('id') == template_field:
+                            if element['type'] == 'text':
+                                element['text'] = str(row[csv_col])
+                            # Add other element type handling as needed
+                
+                components.append(component_data)
+            
+            return components
+            
+        except Exception as e:
+            print(f"Error creating components from CSV: {e}")
+            return False
+    
+    def create_from_component(self, component_id: str) -> bool:
+        """Create a template from an existing component"""
+        try:
+            # Get component data from component controller
+            component = self.component_controller.get_component_by_id(component_id)
+            if not component:
+                print(f"Component not found: {component_id}")
+                return False
+            
+            # Create template name from component name
+            template_name = f"Template_{component.name}"
+            
+            # Get elements and add unique IDs
+            elements = component.properties.get('elements', [])
+            for i, element in enumerate(elements):
+                # Generate unique ID based on element type and index
+                element_type = element.get('type', 'element')
+                element['id'] = f"{element_type}_{i}"
+            
+            # Extract template data from component
+            template_data = {
+                'type': component.type,
+                'dimensions': {
+                    'width': component.properties.get('width', 800),
+                    'height': component.properties.get('height', 600)
+                },
+                'elements': elements,
+                'description': f"Template created from component: {component.name}",
+                'category': 'components',
+                'metadata': {
+                    'name': template_name,
+                    'created_at': datetime.now().isoformat(),
+                    'updated_at': datetime.now().isoformat(),
+                    'source_component': component_id
+                }
+            }
+            
+            # Save the template
+            success = self.save_template(template_name, template_data)
+            
+            if success:
+                print(f"Template created successfully: {template_name}")
+            else:
+                print(f"Failed to create template from component: {component_id}")
+                
+            return success
+            
+        except Exception as e:
+            print(f"Error creating template from component: {e}")
+            import traceback
+            traceback.print_exc()
+            return False

@@ -7,6 +7,7 @@ from controllers.component_controller import ComponentController
 from controllers.template_controller import TemplateController
 from controllers.asset_controller import AssetController
 from controllers.settings_controller import SettingsController
+from controllers.csv_controller import CSVController
 
 class App(ctk.CTk):
     def __init__(self):
@@ -37,7 +38,8 @@ class App(ctk.CTk):
             'component': ComponentController(self.db),
             'template': TemplateController(self.db),
             'asset': AssetController(self.db),
-            'settings': SettingsController(self.db)
+            'settings': SettingsController(self.db),
+            'csv': CSVController()
         }
         
         # Start with project selection
@@ -57,7 +59,8 @@ class App(ctk.CTk):
             'component': None,
             'template': None,
             'asset': None,
-            'settings': None
+            'settings': None,
+            'csv': None
         }
         
         self.project_view.pack_forget()

@@ -5,6 +5,7 @@ from views.asset_manager import AssetManager
 from views.settings_view import SettingsView
 from views.template_manager import TemplateManager
 from views.components_manager import ComponentsManager
+from views.csv_manager import CSVManager
 
 class MainView(ctk.CTkFrame):
     def __init__(self, parent, controllers):
@@ -35,7 +36,7 @@ class MainView(ctk.CTkFrame):
         # Sidebar frame with dark theme
         self.sidebar = ctk.CTkFrame(self, fg_color="#2b2b2b")  # Slightly lighter than background
         self.sidebar.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.sidebar.grid_rowconfigure(5, weight=1)  # Push settings to bottom
+        self.sidebar.grid_rowconfigure(6, weight=1)  # Adjusted to accommodate new button
         
         # App Title
         title_label = ctk.CTkLabel(
@@ -80,20 +81,30 @@ class MainView(ctk.CTkFrame):
             command=lambda: self.show_view("asset")
         )
         self.nav_buttons["asset"].grid(row=4, column=0, padx=20, pady=5)
-         # Template Manager Button
+        
+        # Template Manager Button
         self.nav_buttons["template"] = ctk.CTkButton(
             self.sidebar,
             text="Template Manager",
             command=lambda: self.show_view("template")
         )
         self.nav_buttons["template"].grid(row=5, column=0, padx=20, pady=5)
+        
+        # CSV Datasource Button (New)
+        self.nav_buttons["csv"] = ctk.CTkButton(
+            self.sidebar,
+            text="CSV Datasource",
+            command=lambda: self.show_view("csv")
+        )
+        self.nav_buttons["csv"].grid(row=6, column=0, padx=20, pady=5)
+        
         # Settings Button (at bottom)
         self.nav_buttons["settings"] = ctk.CTkButton(
             self.sidebar,
             text="Settings",
             command=lambda: self.show_view("settings")
         )
-        self.nav_buttons["settings"].grid(row=6, column=0, padx=20, pady=20, sticky="s")
+        self.nav_buttons["settings"].grid(row=7, column=0, padx=20, pady=20, sticky="s")
         
         
     def _create_content_area(self):
@@ -149,10 +160,15 @@ class MainView(ctk.CTkFrame):
                 self.content_frame,
                 self.controllers['component'],
                 self.controllers['template']
-            )       
+            )
+        elif view_name == "csv":  # New CSV view
+            self.current_view = CSVManager(
+                self.content_frame,
+                self.controllers['csv']  # You'll need to add this controller
+            )
         
         if self.current_view:
-            self.current_view.pack(fill="both", expand=True) 
+            self.current_view.pack(fill="both", expand=True)
     
     def on_project_selected(self, project_name):
         """Handle project selection and switch to component editor"""

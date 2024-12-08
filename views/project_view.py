@@ -124,7 +124,7 @@ class ProjectSelectionView(ctk.CTkFrame):
         """Show dialog to create a new project"""
         dialog = ctk.CTkToplevel(self)
         dialog.title("Create New Project")
-        self.center_dialog(dialog, width=400, height=250)
+        self.center_dialog(dialog, width=400, height=320)
         
         # Project details container
         details_frame = ctk.CTkFrame(dialog)

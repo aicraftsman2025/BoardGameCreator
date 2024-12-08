@@ -1436,3 +1436,85 @@ class CanvasManager:
             print(f"Error adding QR code: {e}")
             import traceback
             traceback.print_exc()
+    
+    def render_elements_ondemand(self, elements):
+        """Render elements and return canvas for external use"""
+        try:
+            print(f"Rendering {len(elements)} elements")  # Debug
+            
+            # Clear existing elements
+            self.canvas.delete("all")
+            
+            # Store element references
+            self.element_ids = {}
+            self.next_image_ref_id = 0
+            self.image_refs = {}
+            
+            # Draw background
+            self.canvas.configure(bg=self.background_color)
+            
+            # Calculate canvas dimensions based on elements
+            max_x = max_y = 0
+            for element in elements:
+                x = element.get('x', 0)
+                y = element.get('y', 0)
+                properties = element.get('properties', {})
+                width = properties.get('width', 100)
+                height = properties.get('height', 100)
+                max_x = max(max_x, x + width)
+                max_y = max(max_y, y + height)
+            
+            # Update canvas size with padding
+            padding = 40  # Increased padding for labels
+            self.canvas_width = max_x + padding
+            self.canvas_height = max_y + padding
+            
+            self.canvas.configure(
+                width=self.canvas_width,
+                height=self.canvas_height
+            )
+            
+            # Draw each element
+            for element in elements:
+                try:
+                    # Draw element with its ID as a tag
+                    element_id = element.get('id', '')
+                    print(f"Drawing element {element_id}")  # Debug
+                    
+                    # Store element reference
+                    canvas_item = self._draw_element(element)
+                    if canvas_item:
+                        self.element_ids[canvas_item] = element
+                
+                except Exception as e:
+                    print(f"Error drawing element: {e}")
+
+            # Add ID labels after drawing all elements to ensure they're on top
+            for element in elements:
+                try:
+                    element_id = element.get('id', '')
+                    bounds = self._get_element_bounds(element)
+                    label_y = max(10, bounds['y'] - 15)  # Ensure y position is not negative
+                    label_x = max(10, bounds['x'])
+                    label = self.canvas.create_text(
+                        label_x,
+                        label_y,  # Use adjusted y position
+                        text=f"ID: {element_id}",
+                        fill="red",
+                        anchor="w",
+                        tags=f"id_label_{element_id}"
+                    )
+                    print(f"Created label for element {element_id}")  # Debug
+                except Exception as e:
+                    print(f"Error creating label: {e}")
+            
+            # Update canvas
+            self.canvas.update()
+            print("Canvas updated successfully")  # Debug
+            
+            return self.canvas
+            
+        except Exception as e:
+            print(f"Error in render_elements_ondemand: {e}")
+            import traceback
+            traceback.print_exc()

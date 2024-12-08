@@ -1,6 +1,8 @@
 import customtkinter as ctk
 import json
 from typing import Optional, Dict
+import pandas as pd
+import os
 
 class TemplateManager(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -130,6 +132,13 @@ class TemplateManager(ctk.CTkFrame):
         
         ctk.CTkButton(
             btn_frame,
+            text="Mapping Fields",
+            command=lambda t=template: self._show_data_source_dialog(t),
+            width=100
+        ).pack(side="left", padx=2)
+        
+        ctk.CTkButton(
+            btn_frame,
             text="Delete",
             command=lambda t=template: self.delete_template(t.id),
             fg_color="red",
@@ -191,7 +200,36 @@ class TemplateManager(ctk.CTkFrame):
             text="Cancel",
             command=dialog.destroy
         ).pack(side="right", padx=5)
-    
+        
+        def add_data_source():
+            """Add CSV data source to template"""
+            try:
+                # Get current template data from editor
+                template_data = json.loads(json_text.get("1.0", "end-1c"))
+                
+                # Create data source dialog
+                from views.data_source_dialog import DataSourceDialog
+                
+                def on_save(mapping_config):
+                    # Update template JSON with mapping
+                    template_data["data_source"] = mapping_config
+                    
+                    # Update text area
+                    json_text.delete("1.0", "end")
+                    json_text.insert("1.0", json.dumps(template_data, indent=2))
+                
+                # Show dialog
+                DataSourceDialog(self, template_data, on_save)
+                
+            except Exception as e:
+                self.show_message("Error", f"Failed to Mapping Fields: {str(e)}")
+        
+        # Mapping Fields button
+        ctk.CTkButton(
+            btn_frame,
+            text="Mapping Fields",
+            command=add_data_source
+        ).pack(side="left", padx=5)
     def load_templates(self):
         """Load and display all templates"""
         # Clear existing list
@@ -284,3 +322,45 @@ class TemplateManager(ctk.CTkFrame):
             text="Cancel",
             command=dialog.destroy
         ).pack(side="right", padx=5)
+    
+    def _show_data_source_dialog(self, template):
+        """Show dialog for adding data source to template"""
+        try:
+            # Load full template data
+            template_data = self.controller.load_template(template.id)
+            if not template_data:
+                self.show_message("Error", "Failed to load template data")
+                return
+            
+            # Import and show data source dialog
+            from views.data_source_dialog import DataSourceDialog
+            DataSourceDialog(
+                self,
+                template_data,
+                lambda data_source: self._save_data_source(template.id, data_source)
+            )
+            
+        except Exception as e:
+            print(f"Error showing data source dialog: {e}")
+            self.show_message("Error", f"Failed to show data source dialog: {str(e)}")
+    
+    def _save_data_source(self, template_id, data_source):
+        """Save data source configuration to template"""
+        try:
+            # Load current template data
+            template_data = self.controller.load_template(template_id)
+            if not template_data:
+                raise Exception("Failed to load template data")
+            
+            # Add/update data source configuration
+            template_data['data_source'] = data_source
+            
+            # Save updated template
+            if self.controller.update_template(template_id, template_data):
+                self.show_message("Success", "Data source configuration saved successfully!")
+            else:
+                raise Exception("Failed to save template data")
+                
+        except Exception as e:
+            print(f"Error saving data source: {e}")
+            self.show_message("Error", f"Failed to save data source: {str(e)}")
