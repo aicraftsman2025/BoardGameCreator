@@ -323,6 +323,23 @@ class ComponentEditor(ctk.CTkFrame):
             if existing_component:
                 # Update existing component
                 try:
+                    # Calculate actual dimensions based on unit and DPI
+                    width_px = data['dimensions']['width']
+                    height_px = data['dimensions']['height']
+                    
+                    if data['unit'] == 'mm':
+                        # Convert mm to inches then to pixels
+                        width_px = int((data['dimensions']['width'] / 25.4) * data['dpi'])
+                        height_px = int((data['dimensions']['height'] / 25.4) * data['dpi'])
+                    elif data['unit'] == 'cm':
+                        # Convert cm to inches then to pixels
+                        width_px = int((data['dimensions']['width'] / 2.54) * data['dpi'])
+                        height_px = int((data['dimensions']['height'] / 2.54) * data['dpi'])
+                    elif data['unit'] == 'in':
+                        # Convert inches to pixels
+                        width_px = int(data['dimensions']['width'] * data['dpi'])
+                        height_px = int(data['dimensions']['height'] * data['dpi'])
+                    
                     # Store all component data in properties
                     properties = {
                         'width': data['dimensions']['width'],
@@ -331,7 +348,13 @@ class ComponentEditor(ctk.CTkFrame):
                         'dpi': data['dpi'],
                         'elements': self.element_manager.elements,
                         'background_color': self.canvas_manager.background_color,
-                        'dimensions': data['dimensions']
+                        'dimensions': {
+                            'actual_width': width_px,
+                            'actual_height': height_px,
+                            'width': data['dimensions']['width'],
+                            'height': data['dimensions']['height'],
+                            'unit': data['unit']
+                        }
                     }
                     
                     # Update component data
@@ -388,6 +411,23 @@ class ComponentEditor(ctk.CTkFrame):
                         # Import project_id from project_view
                         from views.project_view import project_id
                         
+                        # Calculate actual dimensions based on unit and DPI
+                        width_px = data['dimensions']['width']
+                        height_px = data['dimensions']['height']
+                        
+                        if data['unit'] == 'mm':
+                            # Convert mm to inches then to pixels
+                            width_px = int((data['dimensions']['width'] / 25.4) * data['dpi'])
+                            height_px = int((data['dimensions']['height'] / 25.4) * data['dpi'])
+                        elif data['unit'] == 'cm':
+                            # Convert cm to inches then to pixels
+                            width_px = int((data['dimensions']['width'] / 2.54) * data['dpi'])
+                            height_px = int((data['dimensions']['height'] / 2.54) * data['dpi'])
+                        elif data['unit'] == 'in':
+                            # Convert inches to pixels
+                            width_px = int(data['dimensions']['width'] * data['dpi'])
+                            height_px = int(data['dimensions']['height'] * data['dpi'])
+                        
                         # Store all component data in properties
                         properties = {
                             'width': data['dimensions']['width'],
@@ -396,7 +436,13 @@ class ComponentEditor(ctk.CTkFrame):
                             'dpi': data['dpi'],
                             'elements': self.element_manager.elements,
                             'background_color': self.canvas_manager.background_color,
-                            'dimensions': data['dimensions']
+                            'dimensions': {
+                                'width': width_px,
+                                'height': height_px,
+                                'original_width': data['dimensions']['width'],
+                                'original_height': data['dimensions']['height'],
+                                'unit': data['unit']
+                            }
                         }
                         
                         component_data = {

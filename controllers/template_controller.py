@@ -178,7 +178,11 @@ class TemplateController:
                 'type': component.type,
                 'dimensions': {
                     'width': component.properties.get('width', 800),
-                    'height': component.properties.get('height', 600)
+                    'height': component.properties.get('height', 600),
+                    'unit': component.properties.get('unit', 'mm'),
+                    'dpi': component.properties.get('dpi', 96),
+                    'actual_width': component.properties.get('dimensions', {}).get('actual_width', 800),
+                    'actual_height': component.properties.get('dimensions', {}).get('actual_height', 600)
                 },
                 'elements': elements,
                 'description': f"Template created from component: {component.name}",
@@ -207,50 +211,127 @@ class TemplateController:
             traceback.print_exc()
             return False
     
-    def export_template_image(self, template_data: dict, output_path: str ,temp_window=None) -> bool:
+    def export_template_image(self, template_data: dict, output_path: str, preview_frame=None) -> bool:
         """Export template as image using canvas rendering"""
         try:
-            # Create temporary managers for rendering
+            # Create a dialog window for rendering
+            dialog = ctk.CTkToplevel()
+            dialog.title("Rendering...")
+            
+            # Get actual dimensions
+            actual_width = template_data['dimensions'].get('actual_width', template_data['dimensions']['width'])
+            actual_height = template_data['dimensions'].get('actual_height', template_data['dimensions']['height'])
+            
+            # Create a frame with fixed dimensions
+            render_frame = ctk.CTkFrame(dialog, width=actual_width, height=actual_height)
+            render_frame.pack_propagate(False)  # Prevent frame from shrinking
+            render_frame.pack(padx=0, pady=0)
+            
+            # Create internal canvas for final rendering
+            internal_canvas = tk.Canvas(
+                render_frame,
+                width=actual_width,
+                height=actual_height,
+                highlightthickness=0
+            )
+            internal_canvas.pack(expand=False, fill=None)
+            
+            # Initialize managers
             event_manager = EventManager()
+            element_manager = ElementManager(event_manager, dialog)
+            canvas_manager = CanvasManager(render_frame, event_manager, element_manager)
             
-            # Create a temporary top-level window for canvas
-            #temp_window = preview_frame if preview_frame else ctk.CTkFrame()
-            #temp_window.withdraw()  # Hide the window
+            # Configure canvas with explicit dimensions
+            canvas = canvas_manager.canvas
+            canvas.configure(width=actual_width, height=actual_height)
+            canvas.pack(expand=False, fill=None)  # Don't allow canvas to resize
             
-            # Initialize managers with the temp window
-            element_manager = ElementManager(event_manager, temp_window)
-            
-            # Initialize canvas manager
-            canvas_manager = CanvasManager(temp_window, event_manager, element_manager)
+            # Force dialog update and geometry
+            dialog.update_idletasks()
+            dialog.geometry(f"{actual_width}x{actual_height}")
             
             try:
-                # Set canvas properties
-                canvas_manager.background_color = template_data.get('background_color', '#FFFFFF')
-                canvas_manager.canvas_width = template_data['dimensions']['width']
-                canvas_manager.canvas_height = template_data['dimensions']['height']
+                # Render elements at actual size and get rendered canvas
+                rendered_canvas = canvas_manager.render_elements_ondemand(template_data['elements'], exporting=True)
                 
-                # Update canvas size
-                # canvas_manager.canvas.configure(
-                #     width=canvas_manager.canvas_width,
-                #     height=canvas_manager.canvas_height,
-                #     bg=canvas_manager.background_color
-                # )
+                # Copy rendered content to internal canvas
+                internal_canvas.delete('all')
+                for item in rendered_canvas.find_all():
+                    # Get item type and coordinates
+                    item_type = rendered_canvas.type(item)
+                    coords = rendered_canvas.coords(item)
+                    
+                    # Copy item properties
+                    config = {key: rendered_canvas.itemcget(item, key) 
+                            for key in rendered_canvas.itemconfig(item)}
+                    
+                    # Create same item on internal canvas based on type
+                    try:
+                        if item_type == "line":
+                            if len(coords) >= 4:  # Ensure we have enough coordinates
+                                internal_canvas.create_line(*coords, **config)
+                        elif item_type == "text":
+                            internal_canvas.create_text(*coords, **config)
+                        elif item_type == "image":
+                            internal_canvas.create_image(*coords, **config)
+                        elif item_type == "rectangle":
+                            internal_canvas.create_rectangle(*coords, **config)
+                        # Add other types as needed
+                    except Exception as e:
+                        print(f"Error copying item type {item_type}: {e}")
+                        continue
                 
-                print(f"Rendering elements {template_data['elements']}")
-                # Render elements
-                canvas = canvas_manager.render_elements_ondemand(template_data['elements'],exporting=True)
-                canvas.update()  # Ensure all elements are rendered
+                # Multiple update cycles to ensure complete rendering
+                for _ in range(3):
+                    internal_canvas.update_idletasks()
+                    dialog.update_idletasks()
+                    dialog.update()
                 
-                # Get canvas dimensions and position
-                base64_data = self._canvas_to_base64(canvas)
-            
-                # Convert base64 to image and save
+                # Additional wait for rendering
+                dialog.after(1000)
+                
+                # Get base64 string from internal canvas
+                base64_data = self._canvas_to_base64(internal_canvas)
+                
+                # Save to file
                 self._save_base64_to_file(base64_data, output_path, 'PNG')
+                
+                # Update preview if provided
+                if preview_frame:
+                    for widget in preview_frame.winfo_children():
+                        widget.destroy()
+                    
+                    # Load and verify the saved image
+                    from PIL import Image, ImageTk
+                    preview_img = Image.open(output_path)
+                    
+                    # Verify image dimensions
+                    if preview_img.size == (1, 1):
+                        raise Exception("Generated image is 1x1 pixel - rendering failed")
+                    
+                    # Calculate scaling to fit preview frame
+                    preview_width = preview_frame.winfo_width()
+                    preview_height = preview_frame.winfo_height()
+                    
+                    width_scale = preview_width / actual_width
+                    height_scale = preview_height / actual_height
+                    scale = min(width_scale, height_scale)
+                    
+                    # Resize preview image
+                    preview_size = (int(actual_width * scale), int(actual_height * scale))
+                    preview_img = preview_img.resize(preview_size, Image.Resampling.LANCZOS)
+                    
+                    # Create and display preview
+                    preview_photo = ImageTk.PhotoImage(preview_img)
+                    preview_label = tk.Label(preview_frame, image=preview_photo)
+                    preview_label.image = preview_photo  # Keep a reference
+                    preview_label.pack(expand=True)
+                
                 return True
                 
             finally:
                 # Clean up
-                temp_window.destroy()
+                dialog.destroy()  # Commented out to keep dialog visible
                 
         except Exception as e:
             print(f"Error exporting template image: {e}")
@@ -264,14 +345,30 @@ class TemplateController:
         from PIL import Image, ImageGrab
         
         try:
-            # Get canvas dimensions and position
+            # Ensure canvas is fully updated
+            canvas.update_idletasks()
+            canvas.update()
+            
+            # Wait a bit for rendering
+            canvas.after(100)
+            
+            # Get the absolute coordinates of the canvas on screen
             x = canvas.winfo_rootx()
             y = canvas.winfo_rooty()
             width = canvas.winfo_width()
             height = canvas.winfo_height()
             
-            # Take a screenshot of the canvas area
-            img = ImageGrab.grab(bbox=(x, y, x + width, y + height))
+            # Take a screenshot of the exact canvas area
+            # Add a small offset to account for any borders
+            img = ImageGrab.grab(
+                bbox=(
+                    x ,  # Add small offset to avoid border
+                    y ,  # Add small offset to avoid border
+                    x + width,
+                    y + height
+                ),
+                include_layered_windows=True  # This helps with some rendering issues
+            )
             
             # Save image to bytes buffer
             buffer = io.BytesIO()
@@ -285,41 +382,7 @@ class TemplateController:
             
         except Exception as e:
             print(f"Error converting canvas to base64: {e}")
-            # Try alternative method for macOS
-            try:
-                # Create a temporary PostScript file
-                import tempfile
-                with tempfile.NamedTemporaryFile(suffix='.ps', delete=False) as temp_file:
-                    temp_ps = temp_file.name
-                
-                # Save canvas to PostScript
-                canvas.postscript(
-                    file=temp_ps,
-                    colormode='color',
-                    width=width,
-                    height=height
-                )
-                
-                # Convert PostScript to PIL Image
-                img = Image.open(temp_ps)
-                
-                # Save to buffer and convert to base64
-                buffer = io.BytesIO()
-                img.save(buffer, format='PNG')
-                buffer.seek(0)
-                
-                # Clean up temp file
-                import os
-                os.unlink(temp_ps)
-                
-                # Convert to base64
-                base64_string = base64.b64encode(buffer.getvalue()).decode()
-                
-                return base64_string
-                
-            except Exception as e2:
-                print(f"Error with alternative method: {e2}")
-                raise
+            raise
     def _save_base64_to_file(self, base64_string: str, filename: str, format: str):
         """Convert base64 string to image file"""
         import base64

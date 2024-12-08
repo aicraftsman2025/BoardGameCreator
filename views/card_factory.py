@@ -120,12 +120,12 @@ class CardFactory(ctk.CTkFrame):
         self.task_list.pack(fill="both", expand=True, padx=5, pady=5)
         
         # Preview frame (right side)
-        preview_frame = ctk.CTkFrame(bottom_container)
-        preview_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
-        preview_frame.configure(width=300)  # Set a default width
+        self.preview_frame = ctk.CTkFrame(bottom_container)
+        self.preview_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
+        self.preview_frame.configure(width=300)  # Set a default width
         
         # Preview header
-        preview_header = ctk.CTkFrame(preview_frame)
+        preview_header = ctk.CTkFrame(self.preview_frame)
         preview_header.pack(fill="x", padx=5, pady=5)
         
         ctk.CTkLabel(
@@ -135,7 +135,7 @@ class CardFactory(ctk.CTkFrame):
         ).pack(side="left", padx=5)
         
         # Preview canvas container with fixed dimensions
-        self.preview_container = ctk.CTkFrame(preview_frame)
+        self.preview_container = ctk.CTkFrame(self.preview_frame)
         self.preview_container.pack(fill="both", expand=True, padx=5, pady=5)
     
     def _load_templates(self):
@@ -366,7 +366,15 @@ class CardFactory(ctk.CTkFrame):
                 if mapping['type'] == 'direct':
                     # Direct column mapping
                     column = mapping['column']
-                    value = str(row[column])
+                    # Handle missing or null values
+                    try:
+                        value = str(row[column]) if pd.notna(row[column]) else ""
+                    except KeyError:
+                        print(f"Warning: Column {column} not found in data")
+                        continue
+                        
+                    if not value:
+                        continue
                     
                     # Find and update element
                     for element in card_data['elements']:
@@ -379,7 +387,12 @@ class CardFactory(ctk.CTkFrame):
                     expression = mapping['expression']
                     # Replace column references with values
                     for column in row.index:
-                        expression = expression.replace(f"${{{column}}}", str(row[column]))
+                        try:
+                            col_value = str(row[column]) if pd.notna(row[column]) else ""
+                            expression = expression.replace(f"${{{column}}}", col_value)
+                        except Exception as e:
+                            print(f"Warning: Error replacing macro value for column {column}: {e}")
+                            continue
                     
                     # Find and update element
                     for element in card_data['elements']:
@@ -390,17 +403,30 @@ class CardFactory(ctk.CTkFrame):
             # Generate filename
             filename = f"card_{index + 1}.png"
             export_path = os.path.join(self.path_var.get(), filename)
+            
+            # Get actual dimensions from template data
+            actual_width = template_data['dimensions']['actual_width']
+            actual_height = template_data['dimensions']['actual_height']
+            
+            # Configure preview container and frame to match actual dimensions
             self.preview_container.configure(
-                width=template_data['dimensions']['width'],
-                height=template_data['dimensions']['height']
+                width=actual_width,
+                height=actual_height
             )
-
+            self.preview_frame.configure(
+                width=actual_width,
+                height=actual_height
+            )
+            
+            # Force update of both frames
             self.preview_container.update()
+            self.preview_frame.update()
+            
             # Use template controller to render and save image
             success = self.template_controller.export_template_image(
                 template_data=card_data,
                 output_path=export_path,
-                temp_window=self.preview_container
+                preview_frame=self.preview_container
             )
             
             if not success:
@@ -410,6 +436,7 @@ class CardFactory(ctk.CTkFrame):
             print(f"Error generating card {index + 1}: {e}")
             import traceback
             traceback.print_exc()
+            raise  # Re-raise to propagate error
     
     def _create_task_frame(self) -> ctk.CTkFrame:
         """Create a new task frame in the task list"""
