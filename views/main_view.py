@@ -6,6 +6,7 @@ from views.settings_view import SettingsView
 from views.template_manager import TemplateManager
 from views.components_manager import ComponentsManager
 from views.csv_manager import CSVManager
+from views.card_factory import CardFactory
 
 class MainView(ctk.CTkFrame):
     def __init__(self, parent, controllers):
@@ -90,13 +91,21 @@ class MainView(ctk.CTkFrame):
         )
         self.nav_buttons["template"].grid(row=5, column=0, padx=20, pady=5)
         
-        # CSV Datasource Button (New)
+        # Card Factory Button (New)
+        self.nav_buttons["factory"] = ctk.CTkButton(
+            self.sidebar,
+            text="Card Factory",
+            command=lambda: self.show_view("factory")
+        )
+        self.nav_buttons["factory"].grid(row=6, column=0, padx=20, pady=5)
+        
+        # CSV Datasource Button
         self.nav_buttons["csv"] = ctk.CTkButton(
             self.sidebar,
             text="CSV Datasource",
             command=lambda: self.show_view("csv")
         )
-        self.nav_buttons["csv"].grid(row=6, column=0, padx=20, pady=5)
+        self.nav_buttons["csv"].grid(row=7, column=0, padx=20, pady=5)
         
         # Settings Button (at bottom)
         self.nav_buttons["settings"] = ctk.CTkButton(
@@ -104,7 +113,7 @@ class MainView(ctk.CTkFrame):
             text="Settings",
             command=lambda: self.show_view("settings")
         )
-        self.nav_buttons["settings"].grid(row=7, column=0, padx=20, pady=20, sticky="s")
+        self.nav_buttons["settings"].grid(row=8, column=0, padx=20, pady=20, sticky="s")
         
         
     def _create_content_area(self):
@@ -165,6 +174,12 @@ class MainView(ctk.CTkFrame):
             self.current_view = CSVManager(
                 self.content_frame,
                 self.controllers['csv']  # You'll need to add this controller
+            )
+        elif view_name == "factory":
+            self.current_view = CardFactory(
+                self.content_frame,
+                self.controllers['template'],
+                self.controllers['csv']
             )
         
         if self.current_view:

@@ -6,6 +6,23 @@ from models.template_manager import TemplateManager
 from controllers.component_controller import ComponentController
 from typing import Optional, List
 import pandas as pd
+from PIL import Image, ImageTk
+import base64
+import io
+import customtkinter as ctk
+
+
+try:
+    from views.component_editor.canvas_manager import CanvasManager
+    from views.component_editor.element_manager import ElementManager
+    from views.component_editor.events.event_manager import EventManager   
+except ImportError:
+    # Fallback imports if the component_editor module isn't in the expected location
+    from ..views.component_editor.canvas_manager import CanvasManager
+    from ..views.component_editor.element_manager import ElementManager
+    from ..views.component_editor.events.event_manager import EventManager
+import tempfile
+import tkinter as tk
 
 class TemplateController:
     def __init__(self, db_manager):
@@ -189,3 +206,136 @@ class TemplateController:
             import traceback
             traceback.print_exc()
             return False
+    
+    def export_template_image(self, template_data: dict, output_path: str ,temp_window=None) -> bool:
+        """Export template as image using canvas rendering"""
+        try:
+            # Create temporary managers for rendering
+            event_manager = EventManager()
+            
+            # Create a temporary top-level window for canvas
+            #temp_window = preview_frame if preview_frame else ctk.CTkFrame()
+            #temp_window.withdraw()  # Hide the window
+            
+            # Initialize managers with the temp window
+            element_manager = ElementManager(event_manager, temp_window)
+            
+            # Initialize canvas manager
+            canvas_manager = CanvasManager(temp_window, event_manager, element_manager)
+            
+            try:
+                # Set canvas properties
+                canvas_manager.background_color = template_data.get('background_color', '#FFFFFF')
+                canvas_manager.canvas_width = template_data['dimensions']['width']
+                canvas_manager.canvas_height = template_data['dimensions']['height']
+                
+                # Update canvas size
+                # canvas_manager.canvas.configure(
+                #     width=canvas_manager.canvas_width,
+                #     height=canvas_manager.canvas_height,
+                #     bg=canvas_manager.background_color
+                # )
+                
+                print(f"Rendering elements {template_data['elements']}")
+                # Render elements
+                canvas = canvas_manager.render_elements_ondemand(template_data['elements'],exporting=True)
+                canvas.update()  # Ensure all elements are rendered
+                
+                # Get canvas dimensions and position
+                base64_data = self._canvas_to_base64(canvas)
+            
+                # Convert base64 to image and save
+                self._save_base64_to_file(base64_data, output_path, 'PNG')
+                return True
+                
+            finally:
+                # Clean up
+                temp_window.destroy()
+                
+        except Exception as e:
+            print(f"Error exporting template image: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    def _canvas_to_base64(self, canvas):
+        """Convert canvas content to base64 string"""
+        import base64
+        import io
+        from PIL import Image, ImageGrab
+        
+        try:
+            # Get canvas dimensions and position
+            x = canvas.winfo_rootx()
+            y = canvas.winfo_rooty()
+            width = canvas.winfo_width()
+            height = canvas.winfo_height()
+            
+            # Take a screenshot of the canvas area
+            img = ImageGrab.grab(bbox=(x, y, x + width, y + height))
+            
+            # Save image to bytes buffer
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            buffer.seek(0)
+            
+            # Convert to base64
+            base64_string = base64.b64encode(buffer.getvalue()).decode()
+            
+            return base64_string
+            
+        except Exception as e:
+            print(f"Error converting canvas to base64: {e}")
+            # Try alternative method for macOS
+            try:
+                # Create a temporary PostScript file
+                import tempfile
+                with tempfile.NamedTemporaryFile(suffix='.ps', delete=False) as temp_file:
+                    temp_ps = temp_file.name
+                
+                # Save canvas to PostScript
+                canvas.postscript(
+                    file=temp_ps,
+                    colormode='color',
+                    width=width,
+                    height=height
+                )
+                
+                # Convert PostScript to PIL Image
+                img = Image.open(temp_ps)
+                
+                # Save to buffer and convert to base64
+                buffer = io.BytesIO()
+                img.save(buffer, format='PNG')
+                buffer.seek(0)
+                
+                # Clean up temp file
+                import os
+                os.unlink(temp_ps)
+                
+                # Convert to base64
+                base64_string = base64.b64encode(buffer.getvalue()).decode()
+                
+                return base64_string
+                
+            except Exception as e2:
+                print(f"Error with alternative method: {e2}")
+                raise
+    def _save_base64_to_file(self, base64_string: str, filename: str, format: str):
+        """Convert base64 string to image file"""
+        import base64
+        from PIL import Image
+        import io
+        
+        try:
+            # Decode base64 string to bytes
+            image_data = base64.b64decode(base64_string)
+            
+            # Create PIL Image from bytes
+            image = Image.open(io.BytesIO(image_data))
+            
+            # Save in requested format
+            image.save(filename, format)
+            
+        except Exception as e:
+            print(f"Error saving base64 to file: {e}")
+            raise

@@ -1437,7 +1437,7 @@ class CanvasManager:
             import traceback
             traceback.print_exc()
     
-    def render_elements_ondemand(self, elements):
+    def render_elements_ondemand(self, elements, exporting=False):
         """Render elements and return canvas for external use"""
         try:
             print(f"Rendering {len(elements)} elements")  # Debug
@@ -1490,23 +1490,24 @@ class CanvasManager:
                     print(f"Error drawing element: {e}")
 
             # Add ID labels after drawing all elements to ensure they're on top
-            for element in elements:
-                try:
-                    element_id = element.get('id', '')
-                    bounds = self._get_element_bounds(element)
-                    label_y = max(10, bounds['y'] - 15)  # Ensure y position is not negative
-                    label_x = max(10, bounds['x'])
-                    label = self.canvas.create_text(
-                        label_x,
-                        label_y,  # Use adjusted y position
-                        text=f"ID: {element_id}",
-                        fill="red",
-                        anchor="w",
-                        tags=f"id_label_{element_id}"
-                    )
-                    print(f"Created label for element {element_id}")  # Debug
-                except Exception as e:
-                    print(f"Error creating label: {e}")
+            if not exporting:
+                for element in elements:
+                    try:
+                        element_id = element.get('id', '')
+                        bounds = self._get_element_bounds(element)
+                        label_y = max(10, bounds['y'] - 15)  # Ensure y position is not negative
+                        label_x = max(10, bounds['x'])
+                        label = self.canvas.create_text(
+                            label_x,
+                            label_y,  # Use adjusted y position
+                            text=f"ID: {element_id}",
+                            fill="red",
+                            anchor="w",
+                            tags=f"id_label_{element_id}"
+                        )
+                        print(f"Created label for element {element_id}")  # Debug
+                    except Exception as e:
+                        print(f"Error creating label: {e}")
             
             # Update canvas
             self.canvas.update()

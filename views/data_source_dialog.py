@@ -38,19 +38,19 @@ class DataSourceDialog:
         
         # Right side: Element Mapping
         right_frame = ctk.CTkFrame(main_frame)
-        right_frame.pack(side="right", fill="y", padx=(5, 0), pady=5, ipadx=5)
+        right_frame.pack(side="left", fill="y", padx=(5, 0), pady=5, ipadx=5)
         
         # Header label for mapping
         ctk.CTkLabel(
             right_frame,
             text="Element Mapping",
             font=("Arial", 14, "bold")
-        ).pack(pady=(5,10))
+        ).pack(pady=(0,10))
         
         # Mapping frame with fixed width
         mapping_frame = ctk.CTkScrollableFrame(
             right_frame, 
-            width=550,  # Fixed width for mapping panel
+            width=800,  # Fixed width for mapping panel
             height=600,  # Match preview height approximately
             fg_color="transparent"
         )
@@ -138,12 +138,12 @@ class DataSourceDialog:
         )
         element_frame.pack(fill="x", padx=5, pady=2)
         
-        # Left side: Element info
+        # Top: Element info
         info_frame = ctk.CTkFrame(
             element_frame,
             fg_color="transparent"
         )
-        info_frame.pack(side="left", padx=5, pady=5)
+        info_frame.pack(fill="x", padx=5, pady=5)
         
         # Element ID and type
         ctk.CTkLabel(
@@ -162,66 +162,77 @@ class DataSourceDialog:
             anchor="w"
         ).pack(side="left", padx=5)
         
-        # Right side: Mapping controls
+        # Bottom: Mapping controls
         mapping_frame = ctk.CTkFrame(
             element_frame,
             fg_color="transparent"
         )
-        mapping_frame.pack(side="right", fill="x", expand=True, padx=5, pady=5)
+        mapping_frame.pack(fill="x", expand=True, padx=5, pady=5)
         
-        # Mapping type selector
+        # Left side: Mapping type selector
+        type_frame = ctk.CTkFrame(
+            mapping_frame,
+            fg_color="transparent"
+        )
+        type_frame.pack(side="left", padx=(0, 10))
+        
         mapping_type_var = ctk.StringVar(value="direct")
         mapping_type = ctk.CTkOptionMenu(
-            mapping_frame,
+            type_frame,
             values=["direct", "conditional", "macro"],
             variable=mapping_type_var,
             width=100,
             command=lambda t, eid=element['id']: self._on_mapping_type_changed(t, eid)
         )
-        mapping_type.pack(side="left", padx=5)
+        mapping_type.pack()
         
-        # Options frame for different mapping types
+        # Right side: Options frame for different mapping types
         options_frame = ctk.CTkFrame(
             mapping_frame,
             fg_color="transparent"
         )
-        options_frame.pack(side="left", fill="x", expand=True, padx=5)
+        options_frame.pack(side="left", fill="x", expand=True)
         
         # Create frames for each mapping type
         direct_frame = self._create_direct_mapping_frame(options_frame, columns)
         condition_frame = self._create_conditional_mapping_frame(options_frame, element['id'])
         macro_frame = self._create_macro_mapping_frame(options_frame)
         
+        # Initially show direct mapping and hide others
+        direct_frame.pack(fill="x")
+        condition_frame.pack_forget()
+        macro_frame.pack_forget()
+        
         # Store references
         self.mapping_vars[element['id']] = {
             'type': mapping_type_var,
-            'direct_frame': direct_frame,
-            'column': direct_frame.column_var,  # Stored in direct frame
+            'frames': {
+                'direct': direct_frame,
+                'conditional': condition_frame,
+                'macro': macro_frame
+            },
+            'column': direct_frame.column_var,
             'conditions': [],
-            'macro_frame': macro_frame,
-            'macro': macro_frame.macro_var  # Stored in macro frame
+            'macro': macro_frame.macro_var
         }
         
         self.condition_frames[element['id']] = {
             'frame': condition_frame,
             'conditions': []
         }
-        
-        # Show initial mapping type
-        self._show_mapping_type("direct", element['id'])
     
     def _create_direct_mapping_frame(self, parent, columns):
         """Create direct mapping frame"""
         frame = ctk.CTkFrame(parent, fg_color="transparent")
         
         # Store column variable in the frame
-        frame.column_var = ctk.StringVar(value="Select column...")
+        frame.column_var = ctk.StringVar(value="Column...")
         
         ctk.CTkOptionMenu(
             frame,
             values=["None"] + columns,
             variable=frame.column_var,
-            width=150
+            width=100
         ).pack(side="left", padx=5)
         
         return frame
@@ -230,13 +241,21 @@ class DataSourceDialog:
         """Create conditional mapping frame"""
         frame = ctk.CTkFrame(parent, fg_color="transparent")
         
+        # Container for conditions
+        conditions_container = ctk.CTkFrame(frame, fg_color="transparent")
+        conditions_container.pack(fill="x", expand=True)
+        
+        # Store reference to container
+        frame.conditions_container = conditions_container
+        
+        # Add condition button
         ctk.CTkButton(
             frame,
             text="+ Add Condition",
             width=120,
             height=28,
             command=lambda: self._add_condition(element_id)
-        ).pack(side="left", padx=5)
+        ).pack(pady=(0, 5))
         
         return frame
     
@@ -266,24 +285,45 @@ class DataSourceDialog:
     
     def _on_mapping_type_changed(self, mapping_type, element_id):
         """Handle mapping type change"""
-        self._show_mapping_type(mapping_type, element_id)
+        try:
+            # If switching to conditional, ensure container exists
+            if mapping_type == "conditional":
+                condition_data = self.condition_frames[element_id]
+                if not hasattr(condition_data['frame'], 'conditions_container'):
+                    condition_data['frame'].conditions_container = ctk.CTkFrame(
+                        condition_data['frame'],
+                        fg_color="transparent"
+                    )
+                    condition_data['frame'].conditions_container.pack(fill="x", expand=True)
+            
+            self._show_mapping_type(mapping_type, element_id)
+            
+        except Exception as e:
+            print(f"Error changing mapping type: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _show_mapping_type(self, mapping_type, element_id):
         """Show/hide mapping UI based on type"""
-        mapping_data = self.mapping_vars[element_id]
-        
-        # Hide all frames first
-        mapping_data['direct_frame'].pack_forget()
-        mapping_data['macro_frame'].pack_forget()
-        self.condition_frames[element_id]['frame'].pack_forget()
-        
-        # Show selected mapping type
-        if mapping_type == "direct":
-            mapping_data['direct_frame'].pack(fill="x")
-        elif mapping_type == "conditional":
-            self.condition_frames[element_id]['frame'].pack(fill="x")
-        elif mapping_type == "macro":
-            mapping_data['macro_frame'].pack(fill="x")
+        try:
+            mapping_data = self.mapping_vars[element_id]
+            frames = mapping_data['frames']
+            
+            # Hide all frames
+            for frame in frames.values():
+                if isinstance(frame, (ctk.CTkFrame, tk.Frame)) and frame.winfo_exists():
+                    frame.pack_forget()
+            
+            # Show selected frame
+            if mapping_type in frames:
+                frame = frames[mapping_type]
+                if isinstance(frame, (ctk.CTkFrame, tk.Frame)) and frame.winfo_exists():
+                    frame.pack(fill="x", padx=5, pady=2)
+                    
+        except Exception as e:
+            print(f"Error switching mapping type: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _add_condition(self, element_id):
         """Add new condition to element mapping"""
@@ -291,78 +331,85 @@ class DataSourceDialog:
         columns = self._get_csv_columns(self.csv_var.get())
         
         # Create condition frame
-        condition = ctk.CTkFrame(condition_data['frame'])
+        condition = ctk.CTkFrame(condition_data['frame'].conditions_container)
         condition.pack(fill="x", padx=5, pady=2)
         
+        # Store condition variables
+        condition_vars = {
+            'column': ctk.StringVar(value="Column..."),
+            'operator': ctk.StringVar(value="equals"),
+            'value': ctk.StringVar(),
+            'result': ctk.StringVar(),
+            'frame': condition  # Store frame reference
+        }
+        
         # Column selector
-        column_var = ctk.StringVar(value="Select column...")
         column_menu = ctk.CTkOptionMenu(
             condition,
             values=columns,
-            variable=column_var,
-            width=150
+            variable=condition_vars['column'],
+            width=80
         )
-        column_menu.pack(side="left", padx=2)
+        column_menu.pack(side="left", padx=1)
         
         # Operator selector
-        operator_var = ctk.StringVar(value="equals")
         operator_menu = ctk.CTkOptionMenu(
             condition,
             values=["equals", "not equals", "contains", "greater than", "less than"],
-            variable=operator_var,
-            width=100
+            variable=condition_vars['operator'],
+            width=80
         )
         operator_menu.pack(side="left", padx=2)
         
         # Value input
-        value_var = ctk.StringVar()
         value_entry = ctk.CTkEntry(
             condition,
-            textvariable=value_var,
-            width=100,
+            textvariable=condition_vars['value'],
+            width=80,
             placeholder_text="Value"
         )
         value_entry.pack(side="left", padx=2)
         
         # Result value input
-        result_var = ctk.StringVar()
         result_entry = ctk.CTkEntry(
             condition,
-            textvariable=result_var,
-            width=100,
+            textvariable=condition_vars['result'],
+            width=80,
             placeholder_text="Result"
         )
         result_entry.pack(side="left", padx=2)
-        
-        # Store condition data
-        condition_data = {
-            'frame': condition,
-            'column': column_var,
-            'operator': operator_var,
-            'value': value_var,
-            'result': result_var
-        }
         
         # Remove button
         ctk.CTkButton(
             condition,
             text="×",
-            width=30,
-            command=lambda c=condition_data: self._remove_condition(element_id, c)
-        ).pack(side="left", padx=2)
+            width=20,
+            height=20,
+            fg_color="red",
+            hover_color="darkred",
+            font=("Arial", 12, "bold"),
+            command=lambda: self._remove_condition(element_id, condition_vars)
+        ).pack(side="left", padx=1)
         
-        # Store condition variables
-        self.mapping_vars[element_id]['conditions'].append(condition_data)
+        # Add condition to list
+        self.mapping_vars[element_id]['conditions'].append(condition_vars)
     
-    def _remove_condition(self, element_id, condition_data):
-        """Remove condition from element mapping"""
-        # Remove the condition frame
-        condition_data['frame'].destroy()
-        
-        # Remove condition data from storage
-        conditions = self.mapping_vars[element_id]['conditions']
-        if condition_data in conditions:
-            conditions.remove(condition_data)
+    def _remove_condition(self, element_id, condition_vars):
+        """Remove single condition from element mapping"""
+        try:
+            # Remove the condition frame
+            if condition_vars['frame'].winfo_exists():
+                condition_vars['frame'].destroy()
+            
+            # Remove condition from the list
+            conditions = self.mapping_vars[element_id]['conditions']
+            if condition_vars in conditions:
+                conditions.remove(condition_vars)
+                
+        except Exception as e:
+            print(f"Error removing condition: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _save_mapping(self):
         """Save the mapping configuration"""
