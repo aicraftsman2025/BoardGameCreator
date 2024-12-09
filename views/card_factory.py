@@ -10,8 +10,6 @@ class CardFactory(ctk.CTkFrame):
         super().__init__(parent)
         self.template_controller = template_controller
         self.csv_controller = csv_controller
-        self.export_tasks = []
-        
         self._create_ui()
         self._load_templates()
     
@@ -90,51 +88,47 @@ class CardFactory(ctk.CTkFrame):
             width=100
         ).pack(pady=5)
         
-        # Bottom Frame: Task List and Preview
-        bottom_container = ctk.CTkFrame(self)
-        bottom_container.pack(fill="both", expand=True, padx=10, pady=5)
+        # Bottom Frame: Export Button, Progress Bar and Preview
+        bottom_frame = ctk.CTkFrame(self)
+        bottom_frame.pack(fill="both", expand=True, padx=10, pady=5)
         
-        # Task frame (left side)
-        task_frame = ctk.CTkFrame(bottom_container)
-        task_frame.pack(side="left", fill="both", expand=True, padx=(0, 5))
+        # Left side: Export button and progress
+        control_frame = ctk.CTkFrame(bottom_frame)
+        control_frame.pack(side="left", fill="y", padx=5)
         
-        # Task list header
-        header_frame = ctk.CTkFrame(task_frame)
-        header_frame.pack(fill="x", padx=5, pady=5)
-        
-        ctk.CTkLabel(
-            header_frame,
-            text="Export Tasks",
-            font=("Arial", 14, "bold")
-        ).pack(side="left", padx=5)
-        
+        # Export button
         ctk.CTkButton(
-            header_frame,
+            control_frame,
             text="Start Export",
             command=self._start_export,
             width=120
-        ).pack(side="right", padx=5)
+        ).pack(pady=5)
         
-        # Task list
-        self.task_list = ctk.CTkScrollableFrame(task_frame)
-        self.task_list.pack(fill="both", expand=True, padx=5, pady=5)
+        # Progress frame
+        progress_frame = ctk.CTkFrame(control_frame)
+        progress_frame.pack(fill="x", pady=5)
         
-        # Preview frame (right side)
-        self.preview_frame = ctk.CTkFrame(bottom_container)
-        self.preview_frame.pack(side="right", fill="both", expand=True, padx=(5, 0))
-        self.preview_frame.configure(width=300)  # Set a default width
+        self.progress_bar = ctk.CTkProgressBar(progress_frame)
+        self.progress_bar.pack(fill="x", padx=5, pady=2)
+        self.progress_bar.set(0)
         
-        # Preview header
-        preview_header = ctk.CTkFrame(self.preview_frame)
-        preview_header.pack(fill="x", padx=5, pady=5)
+        self.progress_label = ctk.CTkLabel(
+            progress_frame,
+            text="Ready",
+            font=("Arial", 10)
+        )
+        self.progress_label.pack(pady=2)
+        
+        # Preview frame
+        self.preview_frame = ctk.CTkFrame(bottom_frame)
+        self.preview_frame.pack(side="right", fill="both", expand=True, padx=5)
         
         ctk.CTkLabel(
-            preview_header,
+            self.preview_frame,
             text="Preview",
             font=("Arial", 14, "bold")
-        ).pack(side="left", padx=5)
+        ).pack(pady=5)
         
-        # Preview canvas container with fixed dimensions
         self.preview_container = ctk.CTkFrame(self.preview_frame)
         self.preview_container.pack(fill="both", expand=True, padx=5, pady=5)
     
@@ -155,25 +149,36 @@ class CardFactory(ctk.CTkFrame):
         filter_frame = ctk.CTkFrame(self.filters_container)
         filter_frame.pack(fill="x", padx=5, pady=2)
         
-        # Column selection
+        # Filter type selection (Column or Row Range)
+        filter_type_var = ctk.StringVar(value="column")
+        filter_type_menu = ctk.CTkOptionMenu(
+            filter_frame,
+            variable=filter_type_var,
+            values=["column", "row range"],
+            width=100,
+            command=lambda x: self._update_filter_options(filter_frame, x)
+        )
+        filter_type_menu.pack(side="left", padx=2)
+        
+        # Column selection (initially visible)
         column_var = ctk.StringVar(value="Select column...")
-        column_menu = ctk.CTkOptionMenu(
+        self.column_menu = ctk.CTkOptionMenu(
             filter_frame,
             variable=column_var,
             values=self._get_csv_columns(),
             width=150
         )
-        column_menu.pack(side="left", padx=2)
+        self.column_menu.pack(side="left", padx=2)
         
-        # Operator selection
+        # Operator selection (initially visible)
         operator_var = ctk.StringVar(value="equals")
-        operator_menu = ctk.CTkOptionMenu(
+        self.operator_menu = ctk.CTkOptionMenu(
             filter_frame,
             variable=operator_var,
-            values=["equals", "not equals", "contains", "greater than", "less than"],
+            values=["equals", "not equals", "contains", "greater than", "less than", "range"],
             width=100
         )
-        operator_menu.pack(side="left", padx=2)
+        self.operator_menu.pack(side="left", padx=2)
         
         # Value input
         value_var = ctk.StringVar()
@@ -181,7 +186,7 @@ class CardFactory(ctk.CTkFrame):
             filter_frame,
             textvariable=value_var,
             width=150,
-            placeholder_text="Filter value..."
+            placeholder_text="Filter value... (use '-' for range)"
         )
         value_entry.pack(side="left", padx=2)
         
@@ -194,6 +199,22 @@ class CardFactory(ctk.CTkFrame):
             fg_color="red",
             hover_color="darkred"
         ).pack(side="right", padx=2)
+    
+    def _update_filter_options(self, filter_frame, filter_type):
+        """Update filter options based on filter type"""
+        # Get the widgets
+        widgets = filter_frame.winfo_children()
+        column_menu = widgets[1]  # Column menu
+        operator_menu = widgets[2]  # Operator menu
+        
+        if filter_type == "row range":
+            # Hide column and operator menus
+            column_menu.pack_forget()
+            operator_menu.pack_forget()
+        else:
+            # Show column and operator menus
+            column_menu.pack(side="left", padx=2, after=widgets[0])
+            operator_menu.pack(side="left", padx=2, after=column_menu)
     
     def _get_csv_columns(self) -> List[str]:
         """Get columns from selected template's CSV"""
@@ -250,31 +271,83 @@ class CardFactory(ctk.CTkFrame):
         except Exception as e:
             print(f"Error updating preview container: {e}")
     
-    def _update_progress(self, progress):
-        """Update progress bar safely"""
+    def _apply_filters(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Apply filters to DataFrame"""
         try:
-            if hasattr(self, 'progress_bar') and self.progress_bar.winfo_exists():
-                self.progress_bar.set(progress)
-                self.progress_bar.update()
+            row_ranges = []
+            
+            for filter_frame in self.filters_container.winfo_children():
+                widgets = filter_frame.winfo_children()
+                filter_type = widgets[0].get()  # Filter type menu
+                
+                if filter_type == "row range":
+                    value = widgets[3].get()  # Value entry for row range
+                    try:
+                        # Parse row range
+                        if '-' in value:
+                            start, end = map(int, value.split('-'))
+                            # Convert to 0-based index and make end inclusive
+                            start = max(0, start - 1)  # Convert 1-based to 0-based index
+                            end = min(len(df), end)    # Ensure end doesn't exceed DataFrame length
+                            row_ranges.append((start, end))
+                        else:
+                            # Single row number
+                            row_num = int(value) - 1  # Convert to 0-based index
+                            if 0 <= row_num < len(df):
+                                row_ranges.append((row_num, row_num + 1))
+                    except ValueError:
+                        print(f"Invalid row range format: {value}")
+                        continue
+                else:
+                    # Apply regular column filters
+                    column = widgets[1].get()  # Column menu
+                    operator = widgets[2].get()  # Operator menu
+                    value = widgets[3].get()    # Value entry
+                    
+                    if column and operator and value:
+                        if operator == "equals":
+                            df = df[df[column] == value]
+                        elif operator == "not equals":
+                            df = df[df[column] != value]
+                        elif operator == "contains":
+                            df = df[df[column].astype(str).str.contains(value, case=False)]
+                        elif operator == "greater than":
+                            df = df[pd.to_numeric(df[column], errors='coerce') > float(value)]
+                        elif operator == "less than":
+                            df = df[pd.to_numeric(df[column], errors='coerce') < float(value)]
+                        elif operator == "range":
+                            try:
+                                start, end = map(float, value.split('-'))
+                                numeric_column = pd.to_numeric(df[column], errors='coerce')
+                                df = df[(numeric_column >= start) & (numeric_column <= end)]
+                            except ValueError:
+                                print(f"Invalid range format: {value}")
+                                continue
+            
+            # Apply row ranges if any exist
+            if row_ranges:
+                # Create a mask for selected rows
+                mask = pd.Series(False, index=df.index)
+                for start, end in row_ranges:
+                    mask.iloc[start:end] = True
+                df = df[mask]
+            
+            return df
+            
         except Exception as e:
-            print(f"Progress bar update failed: {e}")
+            print(f"Error applying filters: {e}")
+            return df
     
     def _start_export(self):
         """Start the export process"""
-        if not self._validate_export():
-            return
-        
         try:
-            # Create export task frame
-            task_frame = self._create_task_frame()
-            progress_bar = task_frame.winfo_children()[1]  # Get progress bar
-            status_label = task_frame.winfo_children()[2]  # Get status label
+            # Reset progress
+            self.progress_bar.set(0)
+            self.progress_label.configure(text="Starting export...")
             
-            # Store progress bar reference
-            self.progress_bar = progress_bar
-            
-            def update_progress_safely(progress):
-                self.after(0, lambda: self._update_progress(progress))
+            # Validation
+            if not self._validate_export():
+                return
             
             # Get template data
             template_name = self.template_var.get()
@@ -300,173 +373,89 @@ class CardFactory(ctk.CTkFrame):
                 self._show_error("No records match the filter criteria")
                 return
             
-            # Update status
             total_records = len(df)
-            status_label.configure(text=f"Processing 0/{total_records} records...")
             
-            # Process each row
-            progress = 0
+            # Process each record
             for index, row in df.iterrows():
                 # Update progress
                 progress = (index + 1) / total_records
-                update_progress_safely(progress)
-                status_label.configure(text=f"Processing {index + 1}/{total_records} records...")
+                self.progress_bar.set(progress)
+                self.progress_label.configure(
+                    text=f"Processing card {index + 1} of {total_records}"
+                )
+                self.update()  # Force GUI update
                 
-                # Generate image for this record
-                self._generate_card_image(template_data, row, index)
+                # Create a copy of template data
+                card_data = template_data.copy()
                 
-                # Force UI update
-                self.update()
+                # Apply mappings
+                self._apply_mappings(card_data, row)
+                
+                # Generate filename
+                filename = f"card_{index + 1}.png"
+                export_path = os.path.join(self.path_var.get(), filename)
+                
+                # Generate card image
+                success = self.template_controller.export_template_image(
+                    template_data=card_data,
+                    output_path=export_path,
+                    preview_frame=self.preview_container
+                )
+                
+                if not success:
+                    self._show_error(f"Failed to generate card {index + 1}")
+                    return
             
-            # Complete
-            progress = 1
-            update_progress_safely(progress)
-            status_label.configure(text=f"Completed: {total_records} cards exported")
+            # Update progress to complete
+            self.progress_bar.set(1)
+            self.progress_label.configure(text="Export completed!")
+            self.update()
+            
+            tk.messagebox.showinfo("Success", "Export completed successfully!")
             
         except Exception as e:
             self._show_error(f"Export failed: {str(e)}")
-            import traceback
-            traceback.print_exc()
+        finally:
+            # Reset progress
+            self.progress_bar.set(0)
+            self.progress_label.configure(text="Ready")
+            self.update()
     
-    def _apply_filters(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply filters to DataFrame"""
+    def _apply_mappings(self, card_data: Dict, row: pd.Series):
+        """Apply data mappings to card data"""
         try:
-            for filter_frame in self.filters_container.winfo_children():
-                widgets = filter_frame.winfo_children()
-                column = widgets[0].get()  # Column menu
-                operator = widgets[1].get()  # Operator menu
-                value = widgets[2].get()    # Value entry
-                
-                if column and operator and value:
-                    if operator == "equals":
-                        df = df[df[column] == value]
-                    elif operator == "not equals":
-                        df = df[df[column] != value]
-                    elif operator == "contains":
-                        df = df[df[column].astype(str).str.contains(value, case=False)]
-                    elif operator == "greater than":
-                        df = df[pd.to_numeric(df[column], errors='coerce') > float(value)]
-                    elif operator == "less than":
-                        df = df[pd.to_numeric(df[column], errors='coerce') < float(value)]
+            mappings = card_data.get('data_source', {}).get('mappings', {})
+            available_columns = row.index.tolist()
             
-            return df
-            
-        except Exception as e:
-            print(f"Error applying filters: {e}")
-            return df
-    
-    def _generate_card_image(self, template_data: Dict, row: pd.Series, index: int):
-        """Generate card image for a single record"""
-        try:
-            # Create a copy of template data
-            card_data = template_data.copy()
-            
-            # Apply data mappings
-            for element_id, mapping in template_data['data_source']['mappings'].items():
+            for element_id, mapping in mappings.items():
                 if mapping['type'] == 'direct':
-                    # Direct column mapping
                     column = mapping['column']
-                    # Handle missing or null values
-                    try:
-                        value = str(row[column]) if pd.notna(row[column]) else ""
-                    except KeyError:
-                        print(f"Warning: Column {column} not found in data")
+                    if column not in available_columns:
+                        print(f"Warning: Column '{column}' not found in data")
                         continue
-                        
+                    
+                    value = str(row[column]) if pd.notna(row[column]) else ""
                     if not value:
                         continue
                     
-                    # Find and update element
                     for element in card_data['elements']:
-                        if element['id'] == element_id:
-                            if element['type'] == 'text':
-                                element['properties']['text'] = value
+                        if element['id'] == element_id and element['type'] == 'text':
+                            element['properties']['text'] = value
+                            break
                 
                 elif mapping['type'] == 'macro':
-                    # Handle macro expressions
                     expression = mapping['expression']
-                    # Replace column references with values
-                    for column in row.index:
-                        try:
-                            col_value = str(row[column]) if pd.notna(row[column]) else ""
-                            expression = expression.replace(f"${{{column}}}", col_value)
-                        except Exception as e:
-                            print(f"Warning: Error replacing macro value for column {column}: {e}")
-                            continue
+                    for column in available_columns:
+                        col_value = str(row[column]) if pd.notna(row[column]) else ""
+                        expression = expression.replace(f"${{{column}}}", col_value)
                     
-                    # Find and update element
                     for element in card_data['elements']:
-                        if element['id'] == element_id:
-                            if element['type'] == 'image':
-                                element['properties']['path'] = expression
-            
-            # Generate filename
-            filename = f"card_{index + 1}.png"
-            export_path = os.path.join(self.path_var.get(), filename)
-            
-            # Get actual dimensions from template data
-            actual_width = template_data['dimensions']['actual_width']
-            actual_height = template_data['dimensions']['actual_height']
-            
-            # Configure preview container and frame to match actual dimensions
-            self.preview_container.configure(
-                width=actual_width,
-                height=actual_height
-            )
-            self.preview_frame.configure(
-                width=actual_width,
-                height=actual_height
-            )
-            
-            # Force update of both frames
-            self.preview_container.update()
-            self.preview_frame.update()
-            
-            # Use template controller to render and save image
-            success = self.template_controller.export_template_image(
-                template_data=card_data,
-                output_path=export_path,
-                preview_frame=self.preview_container
-            )
-            
-            if not success:
-                raise Exception("Failed to generate card image")
-            
+                        if element['id'] == element_id and element['type'] == 'image':
+                            element['properties']['path'] = expression
+                            break
+        
         except Exception as e:
-            print(f"Error generating card {index + 1}: {e}")
-            import traceback
-            traceback.print_exc()
-            raise  # Re-raise to propagate error
-    
-    def _create_task_frame(self) -> ctk.CTkFrame:
-        """Create a new task frame in the task list"""
-        task_frame = ctk.CTkFrame(self.task_list)
-        task_frame.pack(fill="x", padx=5, pady=2)
-        
-        # Task info
-        info_frame = ctk.CTkFrame(task_frame)
-        info_frame.pack(fill="x", padx=5, pady=2)
-        
-        ctk.CTkLabel(
-            info_frame,
-            text=f"Template: {self.template_var.get()}",
-            font=("Arial", 12)
-        ).pack(side="left", padx=5)
-        
-        # Progress bar
-        progress = ctk.CTkProgressBar(task_frame)
-        progress.pack(fill="x", padx=5, pady=2)
-        progress.set(0)
-        
-        # Status label
-        status_label = ctk.CTkLabel(
-            task_frame,
-            text="Preparing...",
-            font=("Arial", 10)
-        )
-        status_label.pack(side="left", padx=5)
-        
-        return task_frame
+            print(f"Error applying mappings: {e}")
     
     def _validate_export(self) -> bool:
         """Validate export configuration"""

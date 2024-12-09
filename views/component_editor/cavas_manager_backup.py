@@ -2,6 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
 from .events.event_types import EventType
 from .events.event_manager import EventManager
+import qrcode
 
 class CanvasManager:
     def __init__(self, parent, event_manager: EventManager, element_manager):
@@ -43,7 +44,7 @@ class CanvasManager:
     def get_frame(self):
         """Return the main frame of the canvas manager"""
         return self.canvas_frame
-    å
+    
     def _create_canvas(self):
         """Create canvas without scrollbars"""
         # Create canvas with a border
@@ -79,6 +80,7 @@ class CanvasManager:
         self.canvas.bind("<Control-MouseWheel>", self._on_mousewheel)
         self.canvas.bind("<Control-Button-4>", self._on_mousewheel)
         self.canvas.bind("<Control-Button-5>", self._on_mousewheel)
+
         
         # Make canvas focusable
         self.canvas.config(takefocus=1)
@@ -158,9 +160,11 @@ class CanvasManager:
         if not hasattr(self, 'current_tool'):
             self.current_tool = 'select'
         
+        print(f"Current tool: {self.current_tool}")
+
         # Find exact element at click position
         clicked_element = self._find_exact_element_at(event.x, event.y)
-        
+        print(f"Clicked element: {clicked_element}")
         if clicked_element:
             # Select the element
             self.selected_element = clicked_element
@@ -230,7 +234,7 @@ class CanvasManager:
                 'y': event.y
             })
         elif self.current_tool == 'resize' and self.selected_element:
-            if not self.resize_start:
+            if not hasattr(self, 'resize_start'):
                 # Start resize if not already started
                 self.resize_start = (event.x, event.y)
                 self.original_size = {
@@ -238,15 +242,10 @@ class CanvasManager:
                     'height': self.selected_element.get('properties', {}).get('height', 100)
                 }
             
-            # Get element's current position and size
-            element_x = self.selected_element['x']
-            element_y = self.selected_element['y']
-            
-            # Calculate the change in position from the resize start point
+            # Calculate new dimensions
             dx = event.x - self.resize_start[0]
             dy = event.y - self.resize_start[1]
             
-            # Calculate new dimensions based on original size and mouse movement
             new_width = max(20, self.original_size['width'] + dx)
             new_height = max(20, self.original_size['height'] + dy)
             
@@ -258,32 +257,19 @@ class CanvasManager:
             if 'properties' not in self.selected_element:
                 self.selected_element['properties'] = {}
             
-            # Store original position
-            if not hasattr(self, 'original_position'):
-                self.original_position = {
-                    'x': element_x,
-                    'y': element_y
-                }
-            
-            # Update only size properties, keeping position unchanged
             self.selected_element['properties']['width'] = new_width
             self.selected_element['properties']['height'] = new_height
             
-            # Show size label with current dimensions - force recreation
+            # Show size label - clear existing first
             self.canvas.delete("size_label_bg")
             self.canvas.delete("size_label_text")
             self._show_size_label(display_width, display_height, event.x, event.y)
             
-            # Re-render and show selection
+            # Re-render elements
             self.render_elements(self.element_manager.elements)
             self.show_selection(self.selected_element)
             
-            # Emit resize event
-            self.event_manager.emit(EventType.ELEMENT_RESIZED, {
-                'element': self.selected_element,
-                'width': new_width,
-                'height': new_height
-            })
+            print(f"Resizing to: {display_width:.1f} × {display_height:.1f} {self.current_unit}")  # Debug
     
     def _on_canvas_release(self, event):
         """Handle mouse release events"""
@@ -350,43 +336,10 @@ class CanvasManager:
         """Handle tool change events"""
         if data:
             self.current_tool = data.get('tool', 'select')
-            
-            # Define cursor for each tool
-            cursors = {
-                'select': 'arrow',
-                'move': 'hand2',       # Hand cursor for moving
-                'resize': 'size_se',   # SE resize cursor
-                'text': 'xterm',       # Text cursor
-                'image': 'plus',       # Plus for adding images
-                'shape': 'crosshair',  # Crosshair for shapes
-                'delete': 'X_cursor'   # X cursor for delete tool
-            }
-            
-            # Set cursor based on tool
-            cursor = cursors.get(self.current_tool, 'arrow')
-            try:
-                self.canvas.config(cursor=cursor)
-                print(f"Changed cursor to: {cursor} for tool: {self.current_tool}")
-            except tk.TclError as e:
-                # Fallback cursors if the first choice isn't available
-                fallback_cursors = {
-                    'hand2': 'hand1',
-                    'size_se': 'sizing',
-                    'X_cursor': 'pirate',
-                    'plus': 'cross'
-                }
-                fallback = fallback_cursors.get(cursor, 'arrow')
-                self.canvas.config(cursor=fallback)
-                print(f"Using fallback cursor: {fallback} for tool: {self.current_tool}")
-            
-            # Reset states when tool changes
-            self.dragging = False
-            self.move_start = None
-            self.resize_start = None
-            
-            # Clear selection when changing tools
-            self.selected_element = None
-            self.clear_selection()
+            cursor = data.get('cursor', 'arrow')
+            self.canvas.configure(cursor=cursor)
+            print(f"Tool changed to: {self.current_tool}")
+            print(f"Data: {data}")
     
     def _handle_background_changed(self, data):
         """Handle canvas background color change"""
@@ -581,7 +534,7 @@ class CanvasManager:
         self.element_ids.clear()
         self.image_refs.clear()
         self.next_image_ref_id = 1
-        
+        print(f"Rendering {(elements)} elements")
         for element in elements:
             self._draw_element(element)
         
@@ -594,18 +547,21 @@ class CanvasManager:
             self.canvas.lift(size_label_info['text'])
             self.canvas.lift(size_label_info['bg'])
     
-    def _draw_element(self, element):
+    def _draw_element(self, element, canvas=None):
         """Draw a single element on the canvas"""
+        # Use provided canvas or default to self.canvas
+        target_canvas = canvas or self.canvas
+        
+        element_type = element.get('type')
+        properties = element.get('properties', {})
         x = element.get('x', 0)
         y = element.get('y', 0)
-        properties = element.get('properties', {})
         width = properties.get('width', 100)
         height = properties.get('height', 100)
         
         canvas_id = None
         
-        if element['type'] == 'text':
-            # Text handling remains the same
+        if element_type == 'text':
             text = properties.get('text', 'New Text')
             font_name = properties.get('font', 'Arial')
             font_size = properties.get('fontSize', 12)
@@ -619,17 +575,19 @@ class CanvasManager:
             if italic: font_style.append('italic')
             font_style = ' '.join(font_style) if font_style else 'normal'
             
-            canvas_id = self.canvas.create_text(
+            # Create text with width constraint for wrapping
+            canvas_id = target_canvas.create_text(
                 x, y,
                 text=text,
                 font=(font_name, font_size, font_style),
                 fill=fill,
                 anchor="nw",
                 justify=align,
+                width=width,
                 tags=("element", "selectable")
             )
-            
-        elif element['type'] == 'shape':
+        
+        elif element_type == 'shape':
             # Get shape properties
             fill = properties.get('fill', 'white')
             outline = properties.get('outline', 'black')
@@ -695,14 +653,14 @@ class CanvasManager:
             self.image_refs[ref_id] = photo_image
             
             # Create canvas image
-            canvas_id = self.canvas.create_image(
+            canvas_id = target_canvas.create_image(
                 x, y,
                 image=photo_image,
                 anchor="nw",
                 tags=("element", "selectable")
             )
-            
-        elif element['type'] == 'image':
+        
+        elif element_type == 'image':
             # Image handling remains the same
             image_path = properties.get('path')
             if image_path:
@@ -715,7 +673,7 @@ class CanvasManager:
                     self.next_image_ref_id += 1
                     self.image_refs[ref_id] = photo_image
                     
-                    canvas_id = self.canvas.create_image(
+                    canvas_id = target_canvas.create_image(
                         x, y,
                         image=photo_image,
                         anchor="nw",
@@ -723,7 +681,7 @@ class CanvasManager:
                     )
                 except Exception as e:
                     print(f"Error loading image {image_path}: {e}")
-                    canvas_id = self.canvas.create_rectangle(
+                    canvas_id = target_canvas.create_rectangle(
                         x, y,
                         x + width,
                         y + height,
@@ -731,9 +689,65 @@ class CanvasManager:
                         outline='gray',
                         tags=("element", "selectable")
                     )
+        elif element_type == 'qrcode':
+            try:
+                print("Rendering QR code")
+                # Get element properties
+                x = element.get('x', 0)
+                y = element.get('y', 0)
+                properties = element.get('properties', {})
+                width = properties.get('width', 200)
+                height = properties.get('height', 200)
+                content = properties.get('content', '')
+                
+                # Generate QR code
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(content)
+                qr.make(fit=True)
+                
+                # Create QR code image
+                qr_image = qr.make_image(fill_color="black", back_color="white")
+                
+                # Resize image to match element dimensions
+                qr_image = qr_image.resize((width, height), Image.Resampling.LANCZOS)
+                
+                # Convert to PhotoImage
+                photo_image = ImageTk.PhotoImage(qr_image)
+                
+                # Store reference to prevent garbage collection
+                image_ref_id = self.next_image_ref_id
+                self.image_refs[image_ref_id] = photo_image
+                self.next_image_ref_id += 1
+                
+                # Create canvas image
+                item_id = target_canvas.create_image(
+                    x + width/2,  # Center the image
+                    y + height/2,
+                    image=photo_image,
+                    tags=("element", "selectable", "qrcode")
+                )
+                
+                # Store element reference
+                self.element_ids[item_id] = element
+                
+                # Add selection handles if selected
+                if element == self.selected_element:
+                    self.show_selection(element)
+                    
+            except Exception as e:
+                print(f"Error rendering QR code: {e}")
+                import traceback
+                traceback.print_exc()
         
         if canvas_id:
             self.element_ids[canvas_id] = element
+        
+        return canvas_id
     
     def _hex_to_rgba(self, color, opacity):
         """Convert color (hex or name) to RGBA tuple"""
@@ -863,6 +877,9 @@ class CanvasManager:
             elif element['type'] == 'image':
                 from views.dialogs.image_dialog import ImageDialog
                 dialog = ImageDialog(self.canvas, element, on_save)
+            elif element['type'] == 'qrcode':
+                from views.dialogs.qrcode_dialog import QRCodeDialog
+                dialog = QRCodeDialog(self.canvas, element, on_save)
             
             # Select the element
             self.selected_element = element
@@ -984,20 +1001,44 @@ class CanvasManager:
         if handle in ['NE', 'SE']:  # Right handles
             new_width = max(20, orig_width + dx)
         
-        if handle in ['NW', 'NE']:  # Top handles
-            new_height = max(20, orig_height - dy)
-            new_y = orig_y + (orig_height - new_height)
-        if handle in ['SW', 'SE']:  # Bottom handles
-            new_height = max(20, orig_height + dy)
-        
-        # Update element properties safely
-        if 'properties' not in self.selected_element:
-            self.selected_element['properties'] = {}
+        # For text elements, only allow width resizing
+        if self.selected_element['type'] == 'text':
+            # Update width for text wrapping
+            if 'properties' not in self.selected_element:
+                self.selected_element['properties'] = {}
+            self.selected_element['properties']['width'] = new_width
             
-        self.selected_element['x'] = new_x
-        self.selected_element['y'] = new_y
-        self.selected_element['properties']['width'] = new_width
-        self.selected_element['properties']['height'] = new_height
+            # Position updates
+            self.selected_element['x'] = new_x
+            self.selected_element['y'] = new_y
+            
+            # Re-render to get new wrapped height
+            self.render_elements(self.element_manager.elements)
+            
+            # Get actual height after wrapping
+            for item_id, elem in self.element_ids.items():
+                if elem == self.selected_element:
+                    bbox = self.canvas.bbox(item_id)
+                    if bbox:
+                        new_height = bbox[3] - bbox[1]
+                        self.selected_element['properties']['height'] = new_height
+                    break
+        else:
+            # Normal resize for non-text elements
+            if handle in ['NW', 'NE']:  # Top handles
+                new_height = max(20, orig_height - dy)
+                new_y = orig_y + (orig_height - new_height)
+            if handle in ['SW', 'SE']:  # Bottom handles
+                new_height = max(20, orig_height + dy)
+            
+            # Update element properties
+            if 'properties' not in self.selected_element:
+                self.selected_element['properties'] = {}
+            
+            self.selected_element['x'] = new_x
+            self.selected_element['y'] = new_y
+            self.selected_element['properties']['width'] = new_width
+            self.selected_element['properties']['height'] = new_height
         
         # Convert to current unit for display
         display_width = self._convert_from_pixels(new_width, self.current_unit, self.current_dpi)
@@ -1011,56 +1052,29 @@ class CanvasManager:
         self.show_selection(self.selected_element)
     
     def _show_size_label(self, width, height, x, y):
-        """Show size label during resize with units and background"""
-        # Format dimensions with 1 decimal place
+        """Show size label with current dimensions"""
+        # Format size text with current unit
         size_text = f"{width:.1f} × {height:.1f} {self.current_unit}"
         
-        # Clean up any existing labels
-        self.canvas.delete("size_label_bg")
-        self.canvas.delete("size_label_text")
+        # Create background for better visibility
+        # self.size_label_bg = self.canvas.create_rectangle(
+        #     x + 10, y - 25,
+        #     x + 150, y - 5,
+        #     fill="#333333",  # Dark gray background
+        #     stipple="gray50",  # Creates a semi-transparent effect
+        #     tags="size_label_bg"
+        # )
         
-        # Position the label above the cursor, with more offset to ensure visibility
-        label_x = x + 15  # Increased x offset
-        label_y = y - 30  # Increased y offset
-        
-        # Create background rectangle first
-        bbox_padding = 6
-        temp_text = self.canvas.create_text(
-            label_x, label_y,
-            text=size_text,
-            anchor="sw",
-            tags="temp"
-        )
-        bbox = self.canvas.bbox(temp_text)
-        self.canvas.delete("temp")
-        
-        if bbox:
-            x1, y1, x2, y2 = bbox
-            self.size_label_bg = self.canvas.create_rectangle(
-                x1 - bbox_padding,
-                y1 - bbox_padding,
-                x2 + bbox_padding,
-                y2 + bbox_padding,
-                fill="white",
-                outline="#0066CC",  # Match text color
-                tags="size_label_bg"
-            )
-        
-        # Create text on top of background
+        # Create text label
         self.size_label = self.canvas.create_text(
-            label_x, label_y,
+            x + 15, y - 15,
             text=size_text,
-            fill="#0066CC",  # Blue color
-            font=("Arial", 10, "bold"),
-            anchor="sw",
+            fill="blue",
+            anchor="w",
             tags="size_label_text"
         )
         
-        # Ensure proper stacking order
-        self.canvas.tag_raise(self.size_label_bg)
-        self.canvas.tag_raise(self.size_label)
-        
-        print(f"Created size label: {size_text} at position ({label_x}, {label_y})")  # Debug print
+        print(f"Size label created: {size_text}")  # Debug
     
     def _show_context_menu(self, event):
         """Show context menu for canvas or selected element"""
@@ -1381,3 +1395,127 @@ class CanvasManager:
         # Update scroll position
         self.canvas.xview_moveto(x_pos / self.canvas_width if self.canvas_width > 0 else 0)
         self.canvas.yview_moveto(y_pos / self.canvas_height if self.canvas_height > 0 else 0)
+    
+    def add_qrcode(self, x=None, y=None):
+        """Add a new QR code element to the canvas"""
+        try:
+            # Default to center if no position specified
+            if x is None:
+                x = self.canvas_width / 2
+            if y is None:
+                y = self.canvas_height / 2
+            
+            # Create QR code element with default properties
+            element = {
+                'type': 'qrcode',
+                'x': x,
+                'y': y,
+                'properties': {
+                    'width': 200,
+                    'height': 200,
+                    'content': 'Sample QR Code'
+                }
+            }
+            
+            print(f"Creating new QR code element at ({x}, {y})")
+            
+            # Add element through element manager
+            if self.element_manager:
+                self.element_manager.add_element(element)
+                
+                # Render the new element
+                self.render_elements(self.element_manager.elements)
+                
+                # Select the new element
+                self.selected_element = element
+                self.show_selection(element)
+                
+                print("QR code element added successfully")
+                
+        except Exception as e:
+            print(f"Error adding QR code: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def render_elements_ondemand(self, elements, exporting=False):
+        """Render elements and return canvas for external use"""
+        try:
+            print(f"Rendering {len(elements)} elements")  # Debug
+            
+            # Clear existing elements
+            self.canvas.delete("all")
+            
+            # Store element references
+            self.element_ids = {}
+            self.next_image_ref_id = 0
+            self.image_refs = {}
+            
+            # Draw background
+            self.canvas.configure(bg=self.background_color)
+            
+            # Calculate canvas dimensions based on elements
+            max_x = max_y = 0
+            for element in elements:
+                x = element.get('x', 0)
+                y = element.get('y', 0)
+                properties = element.get('properties', {})
+                width = properties.get('width', 100)
+                height = properties.get('height', 100)
+                max_x = max(max_x, x + width)
+                max_y = max(max_y, y + height)
+            
+            # Update canvas size with padding
+            padding = 40  # Increased padding for labels
+            self.canvas_width = max_x + padding
+            self.canvas_height = max_y + padding
+            
+            self.canvas.configure(
+                width=self.canvas_width,
+                height=self.canvas_height
+            )
+            
+            # Draw each element
+            for element in elements:
+                try:
+                    # Draw element with its ID as a tag
+                    element_id = element.get('id', '')
+                    print(f"Drawing element {element_id}")  # Debug
+                    
+                    # Store element reference
+                    canvas_item = self._draw_element(element)
+                    if canvas_item:
+                        self.element_ids[canvas_item] = element
+                
+                except Exception as e:
+                    print(f"Error drawing element: {e}")
+
+            # Add ID labels after drawing all elements to ensure they're on top
+            if not exporting:
+                for element in elements:
+                    try:
+                        element_id = element.get('id', '')
+                        bounds = self._get_element_bounds(element)
+                        label_y = max(10, bounds['y'] - 15)  # Ensure y position is not negative
+                        label_x = max(10, bounds['x'])
+                        label = self.canvas.create_text(
+                            label_x,
+                            label_y,  # Use adjusted y position
+                            text=f"ID: {element_id}",
+                            fill="red",
+                            anchor="w",
+                            tags=f"id_label_{element_id}"
+                        )
+                        print(f"Created label for element {element_id}")  # Debug
+                    except Exception as e:
+                        print(f"Error creating label: {e}")
+            
+            # Update canvas
+            self.canvas.update()
+            print("Canvas updated successfully")  # Debug
+            
+            return self.canvas
+            
+        except Exception as e:
+            print(f"Error in render_elements_ondemand: {e}")
+            import traceback
+            traceback.print_exc()

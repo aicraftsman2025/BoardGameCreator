@@ -122,9 +122,37 @@ class CanvasManager:
             if text_id:
                 bbox = self.canvas.bbox(text_id)
                 if bbox:
-                    width = bbox[2] - bbox[0]
+                    # Get the alignment
+                    align = properties.get('align', 'left')
+                    
+                    # Calculate actual width and height
+                    actual_width = bbox[2] - bbox[0]
                     height = bbox[3] - bbox[1]
-        
+                    
+                    # Adjust x position based on alignment
+                    if align == 'center':
+                        return {
+                            'x': element.get('x', 0) + (width - actual_width) / 2,
+                            'y': element.get('y', 0),
+                            'width': actual_width,
+                            'height': height
+                        }
+                    elif align == 'right':
+                        return {
+                            'x': element.get('x', 0) + (width - actual_width),
+                            'y': element.get('y', 0),
+                            'width': actual_width,
+                            'height': height
+                        }
+                    else:  # left alignment
+                        return {
+                            'x': element.get('x', 0),
+                            'y': element.get('y', 0),
+                            'width': actual_width,
+                            'height': height
+                        }
+    
+        # For non-text elements or if text bounds couldn't be calculated
         return {
             'x': element.get('x', 0),
             'y': element.get('y', 0),
@@ -570,19 +598,33 @@ class CanvasManager:
             italic = properties.get('italic', False)
             align = properties.get('align', 'left')
             
+            # Convert alignment to anchor position
+            anchor_map = {
+                'left': 'nw',    # Top-left corner
+                'center': 'n',   # Top-center
+                'right': 'ne'    # Top-right corner
+            }
+            
+            # Calculate x position based on alignment
+            if align == 'center':
+                x_pos = x + (width / 2)
+            elif align == 'right':
+                x_pos = x + width
+            else:  # left
+                x_pos = x
+            
             font_style = []
             if bold: font_style.append('bold')
             if italic: font_style.append('italic')
             font_style = ' '.join(font_style) if font_style else 'normal'
             
-            # Create text with width constraint for wrapping
             canvas_id = target_canvas.create_text(
-                x, y,
+                x_pos, y,
                 text=text,
                 font=(font_name, font_size, font_style),
                 fill=fill,
-                anchor="nw",
-                justify=align,
+                anchor=anchor_map[align],  # Use north-based anchors for consistent top alignment
+                justify=align,             # Keep justify for multi-line alignment
                 width=width,
                 tags=("element", "selectable")
             )
