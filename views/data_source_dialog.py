@@ -477,14 +477,14 @@ class DataSourceDialog:
             messagebox.showerror("Error", f"Failed to load CSV columns: {str(e)}")    
     def _get_csv_files(self):
         try:
-            data_dir = "./assets/data"
+            data_dir = "./assets_static/data"
             return [f for f in os.listdir(data_dir) if f.endswith('.csv')]
         except Exception:
             return []
     
     def _get_csv_columns(self, csv_file):
         try:
-            data_path = os.path.join("./assets/data", csv_file)
+            data_path = os.path.join("./assets_static/data", csv_file)
             df = pd.read_csv(data_path)
             return list(df.columns)
         except Exception:

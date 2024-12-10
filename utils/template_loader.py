@@ -3,7 +3,7 @@ import json
 from typing import Dict, List
 
 class TemplateLoader:
-    def __init__(self, template_dir="assets/templates"):
+    def __init__(self, template_dir="assets_static/templates"):
         self.template_dir = template_dir
     
     def load_all_templates(self) -> List[Dict]:

@@ -1,6 +1,7 @@
 import customtkinter as ctk
-from typing import Dict
+from tkinter import filedialog
 import json
+import webbrowser
 
 class SettingsView(ctk.CTkFrame):
     def __init__(self, parent, controller):
@@ -33,105 +34,125 @@ class SettingsView(ctk.CTkFrame):
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         
-        # General Settings Tab
+        # General Settings Tab (API Keys)
         general_tab = self.tabview.add("General")
         self._create_general_settings(general_tab)
         
-        # Export Settings Tab
+        # Export Settings Tab (Paths)
         export_tab = self.tabview.add("Export")
         self._create_export_settings(export_tab)
         
-        # Advanced Settings Tab
-        advanced_tab = self.tabview.add("Advanced")
-        self._create_advanced_settings(advanced_tab)
+        # About Tab
+        about_tab = self.tabview.add("About")
+        self._create_about_tab(about_tab)
     
     def _create_general_settings(self, parent):
-        # Default Sizes Frame
-        sizes_frame = ctk.CTkFrame(parent)
-        sizes_frame.pack(fill="x", padx=10, pady=5)
+        # API Keys Frame
+        api_frame = ctk.CTkFrame(parent)
+        api_frame.pack(fill="x", padx=10, pady=5)
         
+        # OpenAI API Key
         ctk.CTkLabel(
-            sizes_frame,
-            text="Default Component Sizes (mm)",
+            api_frame,
+            text="OpenAI API Key",
             font=("Helvetica", 14, "bold")
         ).pack(anchor="w", pady=5)
         
-        # Card Size
-        self._create_size_inputs(sizes_frame, "card", "Cards")
-        self._create_size_inputs(sizes_frame, "token", "Tokens")
-        self._create_size_inputs(sizes_frame, "board", "Boards")
+        self.openai_key = ctk.CTkEntry(
+            api_frame,
+            placeholder_text="Enter OpenAI API Key",
+            width=400,
+            show="•"
+        )
+        self.openai_key.pack(anchor="w", padx=5, pady=5)
+        
+        # Claude AI API Key
+        ctk.CTkLabel(
+            api_frame,
+            text="Claude AI API Key",
+            font=("Helvetica", 14, "bold")
+        ).pack(anchor="w", pady=5)
+        
+        self.claude_key = ctk.CTkEntry(
+            api_frame,
+            placeholder_text="Enter Claude AI API Key",
+            width=400,
+            show="•"
+        )
+        self.claude_key.pack(anchor="w", padx=5, pady=5)
     
     def _create_export_settings(self, parent):
-        export_frame = ctk.CTkFrame(parent)
-        export_frame.pack(fill="x", padx=10, pady=5)
+        paths_frame = ctk.CTkFrame(parent)
+        paths_frame.pack(fill="x", padx=10, pady=5)
         
+        # Assets Directory
         ctk.CTkLabel(
-            export_frame,
-            text="Export Settings",
+            paths_frame,
+            text="Assets Directory",
             font=("Helvetica", 14, "bold")
         ).pack(anchor="w", pady=5)
         
-        # Page Size
-        self.page_size_var = ctk.StringVar()
-        ctk.CTkLabel(
-            export_frame,
-            text="Default Page Size:"
-        ).pack(anchor="w", padx=5)
+        path_container = ctk.CTkFrame(paths_frame)
+        path_container.pack(fill="x", pady=5)
         
-        page_size = ctk.CTkOptionMenu(
-            export_frame,
-            values=["A4", "A3", "Letter", "Legal"],
-            variable=self.page_size_var
+        self.assets_path = ctk.CTkEntry(
+            path_container,
+            placeholder_text="Select assets directory...",
+            width=300
         )
-        page_size.pack(anchor="w", padx=5, pady=5)
+        self.assets_path.pack(side="left", padx=5)
         
-        # Export Quality
-        self.quality_var = ctk.StringVar()
-        ctk.CTkLabel(
-            export_frame,
-            text="Export Quality:"
-        ).pack(anchor="w", padx=5)
-        
-        quality = ctk.CTkOptionMenu(
-            export_frame,
-            values=["Draft", "Standard", "High"],
-            variable=self.quality_var
-        )
-        quality.pack(anchor="w", padx=5, pady=5)
-    
-    def _create_advanced_settings(self, parent):
-        advanced_frame = ctk.CTkFrame(parent)
-        advanced_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Autosave Settings
-        ctk.CTkLabel(
-            advanced_frame,
-            text="Autosave",
-            font=("Helvetica", 14, "bold")
-        ).pack(anchor="w", pady=5)
-        
-        self.autosave_var = ctk.BooleanVar()
-        autosave_switch = ctk.CTkSwitch(
-            advanced_frame,
-            text="Enable Autosave",
-            variable=self.autosave_var,
-            command=self._on_autosave_change
-        )
-        autosave_switch.pack(anchor="w", padx=5, pady=5)
-        
-        # Autosave Interval
-        self.interval_var = ctk.StringVar()
-        ctk.CTkLabel(
-            advanced_frame,
-            text="Autosave Interval (minutes):"
-        ).pack(anchor="w", padx=5)
-        
-        interval_entry = ctk.CTkEntry(
-            advanced_frame,
-            textvariable=self.interval_var,
+        ctk.CTkButton(
+            path_container,
+            text="Browse",
+            command=self._choose_assets_path,
             width=100
+        ).pack(side="left", padx=5)
+    
+    def _create_about_tab(self, parent):
+        about_frame = ctk.CTkFrame(parent)
+        about_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # App Title
+        ctk.CTkLabel(
+            about_frame,
+            text="Board Game Designer",
+            font=("Helvetica", 20, "bold")
+        ).pack(pady=10)
+        
+        # Version
+        ctk.CTkLabel(
+            about_frame,
+            text="Version 1.0.0",
+            font=("Helvetica", 12)
+        ).pack(pady=5)
+        
+        # Description
+        description = (
+            "A powerful tool for designing and creating board game components.\n"
+            "Create cards, tokens, boards, and export them to PDF format."
         )
-        interval_entry.pack(anchor="w", padx=5, pady=5)
+        ctk.CTkLabel(
+            about_frame,
+            text=description,
+            font=("Helvetica", 12),
+            wraplength=400
+        ).pack(pady=20)
+        
+        # GitHub Link
+        github_button = ctk.CTkButton(
+            about_frame,
+            text="View on GitHub",
+            command=lambda: webbrowser.open("https://github.com/yourusername/boardgamedesigner")
+        )
+        github_button.pack(pady=10)
+        
+        # Copyright
+        ctk.CTkLabel(
+            about_frame,
+            text="© 2024 Your Name. All rights reserved.",
+            font=("Helvetica", 10)
+        ).pack(pady=20)
     
     def _create_footer(self):
         footer = ctk.CTkFrame(self)
@@ -144,93 +165,41 @@ class SettingsView(ctk.CTkFrame):
             command=self.save_settings
         )
         save_btn.pack(side="right", padx=5, pady=5)
-        
-        # Reset Button
-        reset_btn = ctk.CTkButton(
-            footer,
-            text="Reset to Default",
-            fg_color="red",
-            command=self.reset_settings
-        )
-        reset_btn.pack(side="right", padx=5, pady=5)
     
-    def _create_size_inputs(self, parent, key: str, label: str):
-        frame = ctk.CTkFrame(parent)
-        frame.pack(fill="x", padx=5, pady=2)
-        
-        ctk.CTkLabel(frame, text=f"{label}:").pack(side="left", padx=5)
-        
-        setattr(self, f"{key}_width", ctk.CTkEntry(frame, width=50))
-        getattr(self, f"{key}_width").pack(side="left", padx=5)
-        
-        ctk.CTkLabel(frame, text="x").pack(side="left")
-        
-        setattr(self, f"{key}_height", ctk.CTkEntry(frame, width=50))
-        getattr(self, f"{key}_height").pack(side="left", padx=5)
-        
-        ctk.CTkLabel(frame, text="mm").pack(side="left")
+    def _choose_assets_path(self):
+        path = filedialog.askdirectory(
+            title="Select Assets Directory"
+        )
+        if path:
+            self.assets_path.delete(0, 'end')
+            self.assets_path.insert(0, path)
     
     def load_settings(self):
         settings = self.controller.get_settings()
         if settings:
-            # Load size settings
-            for component in ['card', 'token', 'board']:
-                if sizes := settings['default_sizes'].get(component):
-                    getattr(self, f"{component}_width").insert(0, str(sizes['width']))
-                    getattr(self, f"{component}_height").insert(0, str(sizes['height']))
+            # Load API Keys
+            self.openai_key.delete(0, 'end')
+            self.openai_key.insert(0, settings.get('api_keys', {}).get('openai', ''))
             
-            # Load export settings
-            self.page_size_var.set(settings['export']['page_size'])
-            self.quality_var.set(settings['export']['quality'].capitalize())
+            self.claude_key.delete(0, 'end')
+            self.claude_key.insert(0, settings.get('api_keys', {}).get('claude', ''))
             
-            # Load advanced settings
-            self.autosave_var.set(settings['autosave']['enabled'])
-            self.interval_var.set(str(settings['autosave']['interval']))
+            # Load Paths
+            self.assets_path.delete(0, 'end')
+            self.assets_path.insert(0, settings.get('paths', {}).get('assets', 'assets'))
     
     def save_settings(self):
-        def safe_int(value, default=0):
-            try:
-                return int(value) if value.strip() else default
-            except ValueError:
-                return default
-
         settings = {
-            'default_sizes': {
-                component: {
-                    'width': safe_int(getattr(self, f"{component}_width").get()),
-                    'height': safe_int(getattr(self, f"{component}_height").get())
-                }
-                for component in ['card', 'token', 'board']
+            'api_keys': {
+                'openai': self.openai_key.get(),
+                'claude': self.claude_key.get()
             },
-            'export': {
-                'page_size': self.page_size_var.get(),
-                'quality': self.quality_var.get().lower()
-            },
-            'autosave': {
-                'enabled': self.autosave_var.get(),
-                'interval': safe_int(self.interval_var.get(), 5)  # default 5 minutes
+            'paths': {
+                'assets': self.assets_path.get() or 'assets'
             }
         }
         
-        self.controller.save_settings(settings)
-    
-    def reset_settings(self):
-        if self.show_confirm_dialog():
-            settings = self.controller.get_default_settings()
-            self.controller.save_settings(settings)
-            self.load_settings()
-    
-    def _on_autosave_change(self):
-        # Enable/disable interval entry based on autosave switch
-        pass
-    
-    def _show_color_picker(self):
-        # Implement color picker dialog
-        pass
-    
-    def show_confirm_dialog(self) -> bool:
-        dialog = ctk.CTkInputDialog(
-            text="Type 'RESET' to confirm resetting all settings:",
-            title="Confirm Reset"
-        )
-        return dialog.get_input() == "RESET"
+        success = self.controller.save_settings(settings)
+        if success:
+            # Update asset controller path
+            self.controller.update_asset_path(settings['paths']['assets'])

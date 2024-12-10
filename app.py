@@ -30,15 +30,15 @@ class App(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         
         # Initialize database and controllers
-        self.db = DatabaseManager()  # Add your database initialization
+        self.db = DatabaseManager()
         
         # Create controllers dictionary
         self.controllers = {
             'project': ProjectController(self.db),
             'component': ComponentController(self.db),
             'template': TemplateController(self.db),
-            'asset': AssetController(self.db),
-            'settings': SettingsController(self.db),
+            'asset': AssetController(self.db.db_path),  # Pass db_path instead of db
+            'settings': SettingsController(self.db.db_path),  # Pass db_path instead of db
             'csv': CSVController()
         }
         

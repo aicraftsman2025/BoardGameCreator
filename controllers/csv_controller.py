@@ -5,7 +5,7 @@ import shutil
 
 class CSVController:
     def __init__(self):
-        self.data_dir = "./assets/data"
+        self.data_dir = "./assets_static/data"
         # Create data directory if it doesn't exist
         os.makedirs(self.data_dir, exist_ok=True)
     

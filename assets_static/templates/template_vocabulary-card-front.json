@@ -1,0 +1,126 @@
+{
+    "type": "card",
+    "dimensions": {
+        "width": 63,
+        "height": 88,
+        "unit": "mm",
+        "dpi": 96,
+        "actual_width": 238,
+        "actual_height": 332
+    },
+    "elements": [
+        {
+            "type": "image",
+            "x": 1,
+            "y": -1,
+            "properties": {
+                "width": 238,
+                "height": 337,
+                "image_path": "",
+                "path": "assets/bg_card/other.png",
+                "asset_id": 2830
+            },
+            "id": "image_0"
+        },
+        {
+            "type": "text",
+            "x": 20,
+            "y": 251,
+            "properties": {
+                "text": "used to add new (often different) information",
+                "font": "Arial",
+                "fontSize": 12,
+                "fill": "#feffff",
+                "bold": false,
+                "italic": false,
+                "align": "center",
+                "width": 200,
+                "height": 100,
+                "isTextBox": true
+            },
+            "id": "text_1"
+        },
+        {
+            "type": "image",
+            "x": 53,
+            "y": 59,
+            "properties": {
+                "width": 131,
+                "height": 167,
+                "image_path": "",
+                "path": "assets/Card-2860/trail.png",
+                "asset_id": 2590
+            },
+            "id": "image_2"
+        },
+        {
+            "type": "text",
+            "x": 36,
+            "y": 21,
+            "properties": {
+                "text": "New Text",
+                "font": "Arial",
+                "fontSize": 12,
+                "fill": "#feffff",
+                "bold": false,
+                "italic": false,
+                "align": "left",
+                "width": 200,
+                "height": 100,
+                "isTextBox": true
+            },
+            "id": "text_3"
+        },
+        {
+            "type": "text",
+            "x": 91,
+            "y": 19,
+            "properties": {
+                "text": "Rank",
+                "font": "Arial",
+                "fontSize": 12,
+                "fill": "#feffff",
+                "bold": false,
+                "italic": false,
+                "align": "center",
+                "width": 200,
+                "height": 100,
+                "isTextBox": true
+            },
+            "id": "text_4"
+        }
+    ],
+    "description": "Template created from component: Vocabulary-Card-Front",
+    "category": "components",
+    "metadata": {
+        "name": "Template_Vocabulary-Card-Front",
+        "created_at": "2024-12-10T05:38:13.433063",
+        "updated_at": "2024-12-10T05:38:13.433068"
+    },
+    "data_source": {
+        "type": "csv",
+        "file": "ngsl_data_clean_complete.csv",
+        "mappings": {
+            "image_0": {
+                "type": "macro",
+                "expression": "./assets/bg_card/${PoS}.png"
+            },
+            "text_1": {
+                "type": "direct",
+                "column": "Definition"
+            },
+            "image_2": {
+                "type": "macro",
+                "expression": "./assets/Card-2860/${Word}.png"
+            },
+            "text_3": {
+                "type": "direct",
+                "column": "PoS"
+            },
+            "text_4": {
+                "type": "direct",
+                "column": "Rank"
+            }
+        }
+    }
+}

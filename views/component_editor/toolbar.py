@@ -42,7 +42,7 @@ class Toolbar(ctk.CTkFrame):
                 tool_frame.pack(side="left", padx=2)
                 
                 # Load icon
-                image_path = f"assets/icons/{icon_file}"
+                image_path = f"assets_static/icons/{icon_file}"
                 pil_image = Image.open(image_path)
                 icon_image = ctk.CTkImage(
                     light_image=pil_image,

@@ -227,7 +227,7 @@ class CardFactory(ctk.CTkFrame):
                 if template_data and 'data_source' in template_data:
                     csv_file = template_data['data_source'].get('file')
                     if csv_file:
-                        df = pd.read_csv(os.path.join("./assets/data", csv_file))
+                        df = pd.read_csv(os.path.join("./assets_static/data", csv_file))
                         return list(df.columns)
             return ["No columns available"]
         except Exception:
@@ -365,7 +365,7 @@ class CardFactory(ctk.CTkFrame):
                 self._show_error("No CSV file configured in template")
                 return
             
-            df = pd.read_csv(os.path.join("./assets/data", csv_file))
+            df = pd.read_csv(os.path.join("./assets_static/data", csv_file))
             
             # Apply filters
             df = self._apply_filters(df)

@@ -138,7 +138,7 @@ class CSVManager(ctk.CTkFrame):
             
             if file_path:
                 # Create data directory if it doesn't exist
-                data_dir = "./assets/data"
+                data_dir = "./assets_static/data"
                 os.makedirs(data_dir, exist_ok=True)
                 
                 # Copy file to data directory
@@ -304,7 +304,7 @@ class CSVManager(ctk.CTkFrame):
                 
                 # Load first CSV file if no file is currently loaded
                 if not self.current_csv and csv_files:
-                    self._load_csv(os.path.join("./assets/data", csv_files[0]))
+                    self._load_csv(os.path.join("./assets_static/data", csv_files[0]))
             else:
                 # Show message if no CSV files
                 ctk.CTkLabel(
@@ -319,7 +319,7 @@ class CSVManager(ctk.CTkFrame):
     def _on_csv_selected(self, choice):
         """Handle CSV selection from dropdown"""
         try:
-            file_path = os.path.join("./assets/data", choice)
+            file_path = os.path.join("./assets_static/data", choice)
             self._load_csv(file_path)
         except Exception as e:
             print(f"Error selecting CSV: {e}")

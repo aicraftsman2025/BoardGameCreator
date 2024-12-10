@@ -129,7 +129,7 @@ class TemplateController:
                 return False
             
             # Load CSV data
-            data_path = os.path.join("./assets/data", csv_file)
+            data_path = os.path.join("./assets_static/data", csv_file)
             df = pd.read_csv(data_path)
             
             # Create components for each row

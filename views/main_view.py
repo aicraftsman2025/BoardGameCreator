@@ -39,48 +39,48 @@ class MainView(ctk.CTkFrame):
         # Import icons
         self.icons = {
             "project": ctk.CTkImage(
-                light_image=Image.open("assets/icons/project.png"),
-                dark_image=Image.open("assets/icons/project.png"),
+                light_image=Image.open("assets_static/icons/project.png"),
+                dark_image=Image.open("assets_static/icons/project.png"),
                 size=(20, 20)
             ),
             "component": ctk.CTkImage(
-                light_image=Image.open("assets/icons/component.png"),
-                dark_image=Image.open("assets/icons/component.png"),
+                light_image=Image.open("assets_static/icons/component.png"),
+                dark_image=Image.open("assets_static/icons/component.png"),
                 size=(20, 20)
             ),
             "components": ctk.CTkImage(
-                light_image=Image.open("assets/icons/component.png"),
-                dark_image=Image.open("assets/icons/component.png"),
+                light_image=Image.open("assets_static/icons/component.png"),
+                dark_image=Image.open("assets_static/icons/component.png"),
                 size=(20, 20)
             ),
             "asset": ctk.CTkImage(
-                light_image=Image.open("assets/icons/asset.png"),
-                dark_image=Image.open("assets/icons/asset.png"),
+                light_image=Image.open("assets_static/icons/asset.png"),
+                dark_image=Image.open("assets_static/icons/asset.png"),
                 size=(20, 20)
             ),
             "template": ctk.CTkImage(
-                light_image=Image.open("assets/icons/template.png"),
-                dark_image=Image.open("assets/icons/template.png"),
+                light_image=Image.open("assets_static/icons/template.png"),
+                dark_image=Image.open("assets_static/icons/template.png"),
                 size=(20, 20)
             ),
             "factory": ctk.CTkImage(
-                light_image=Image.open("assets/icons/factory.png"),
-                dark_image=Image.open("assets/icons/factory.png"),
+                light_image=Image.open("assets_static/icons/factory.png"),
+                dark_image=Image.open("assets_static/icons/factory.png"),
                 size=(20, 20)
             ),
             "csv": ctk.CTkImage(
-                light_image=Image.open("assets/icons/csv.png"),
-                dark_image=Image.open("assets/icons/csv.png"),
+                light_image=Image.open("assets_static/icons/csv.png"),
+                dark_image=Image.open("assets_static/icons/csv.png"),
                 size=(20, 20)
             ),
             "pdf": ctk.CTkImage(
-                light_image=Image.open("assets/icons/pdf.png"),
-                dark_image=Image.open("assets/icons/pdf.png"),
+                light_image=Image.open("assets_static/icons/pdf.png"),
+                dark_image=Image.open("assets_static/icons/pdf.png"),
                 size=(20, 20)
             ),
             "settings": ctk.CTkImage(
-                light_image=Image.open("assets/icons/setting.png"),
-                dark_image=Image.open("assets/icons/setting.png"),
+                light_image=Image.open("assets_static/icons/setting.png"),
+                dark_image=Image.open("assets_static/icons/setting.png"),
                 size=(20, 20)
             )
         }

@@ -6,16 +6,26 @@ from models.asset import Asset
 from PIL import Image
 from typing import Optional
 import sqlite3
+from controllers.settings_controller import SettingsController
 
 class AssetController:
-    def __init__(self, db_path):
-        # If db_path is a DatabaseManager instance, get its path
-        if hasattr(db_path, 'db_path'):
-            db_path = db_path.db_path
+    def __init__(self, db):
+        # If db is a DatabaseManager instance, get its path
+        if hasattr(db, 'db_path'):
+            db_path = db.db_path
+        elif isinstance(db, str):
+            db_path = db
+        else:
+            db_path = db
+        
         self.connection = sqlite3.connect(db_path)
         self.connection.row_factory = sqlite3.Row
         self.initialize_database()
-        self.asset_dir = "assets"
+        
+        # Get asset directory from settings or use default
+        settings_controller = SettingsController(db_path)
+        settings = settings_controller.get_settings()
+        self.asset_dir = settings.get('paths', {}).get('assets', "assets")
         os.makedirs(self.asset_dir, exist_ok=True)
     
     def import_asset(self, file_path: str, folder_name: Optional[str] = None) -> Asset:
@@ -231,4 +241,31 @@ class AssetController:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        self.connection.commit()
+    
+    def update_asset_path(self, new_path: str):
+        """Update the asset directory path and move existing assets"""
+        if new_path == self.asset_dir:
+            return
+        
+        # Create new directory
+        os.makedirs(new_path, exist_ok=True)
+        
+        # Move existing assets if any exist
+        if os.path.exists(self.asset_dir):
+            for item in os.listdir(self.asset_dir):
+                src = os.path.join(self.asset_dir, item)
+                dst = os.path.join(new_path, item)
+                shutil.move(src, dst)
+                
+                # Update database paths
+                if os.path.isfile(src):
+                    query = """
+                        UPDATE assets 
+                        SET file_path = REPLACE(file_path, ?, ?)
+                        WHERE file_path LIKE ?
+                    """
+                    self.connection.execute(query, (self.asset_dir, new_path, f"{self.asset_dir}%"))
+        
+        self.asset_dir = new_path
         self.connection.commit()
