@@ -11,16 +11,16 @@ from controllers.csv_controller import CSVController
 
 class App(ctk.CTk):
     def __init__(self):
-        # Set theme before initializing
-        ctk.set_appearance_mode("dark")  # Set dark mode
-        ctk.set_default_color_theme("blue")  # Set blue theme
+        # Set theme before initializing - enforce dark mode
+        ctk.set_appearance_mode("dark")  # Set dark mode and never change it
+        ctk.set_default_color_theme("blue")
         
         super().__init__()
         self.title("Board Game Designer")
         self.geometry("1024x768")
         
         # Configure dark theme colors
-        self.configure(fg_color="#1a1a1a")  # Very dark gray, almost black
+        self.configure(fg_color="#1a1a1a")  # Very dark gray background
         
         # Set default colors for CustomTkinter widgets
         ctk.set_widget_scaling(1.0)  # Ensure consistent widget sizing

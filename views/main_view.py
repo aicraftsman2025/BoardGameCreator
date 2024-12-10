@@ -7,6 +7,8 @@ from views.template_manager import TemplateManager
 from views.components_manager import ComponentsManager
 from views.csv_manager import CSVManager
 from views.card_factory import CardFactory
+from views.pdf_exporter import PDFExporter
+from PIL import Image
 
 class MainView(ctk.CTkFrame):
     def __init__(self, parent, controllers):
@@ -34,10 +36,60 @@ class MainView(ctk.CTkFrame):
             self.show_view("project")
     
     def _create_sidebar(self):
+        # Import icons
+        self.icons = {
+            "project": ctk.CTkImage(
+                light_image=Image.open("assets/icons/project.png"),
+                dark_image=Image.open("assets/icons/project.png"),
+                size=(20, 20)
+            ),
+            "component": ctk.CTkImage(
+                light_image=Image.open("assets/icons/component.png"),
+                dark_image=Image.open("assets/icons/component.png"),
+                size=(20, 20)
+            ),
+            "components": ctk.CTkImage(
+                light_image=Image.open("assets/icons/component.png"),
+                dark_image=Image.open("assets/icons/component.png"),
+                size=(20, 20)
+            ),
+            "asset": ctk.CTkImage(
+                light_image=Image.open("assets/icons/asset.png"),
+                dark_image=Image.open("assets/icons/asset.png"),
+                size=(20, 20)
+            ),
+            "template": ctk.CTkImage(
+                light_image=Image.open("assets/icons/template.png"),
+                dark_image=Image.open("assets/icons/template.png"),
+                size=(20, 20)
+            ),
+            "factory": ctk.CTkImage(
+                light_image=Image.open("assets/icons/factory.png"),
+                dark_image=Image.open("assets/icons/factory.png"),
+                size=(20, 20)
+            ),
+            "csv": ctk.CTkImage(
+                light_image=Image.open("assets/icons/csv.png"),
+                dark_image=Image.open("assets/icons/csv.png"),
+                size=(20, 20)
+            ),
+            "pdf": ctk.CTkImage(
+                light_image=Image.open("assets/icons/pdf.png"),
+                dark_image=Image.open("assets/icons/pdf.png"),
+                size=(20, 20)
+            ),
+            "settings": ctk.CTkImage(
+                light_image=Image.open("assets/icons/setting.png"),
+                dark_image=Image.open("assets/icons/setting.png"),
+                size=(20, 20)
+            )
+        }
+
         # Sidebar frame with dark theme
-        self.sidebar = ctk.CTkFrame(self, fg_color="#2b2b2b")  # Slightly lighter than background
+        self.sidebar = ctk.CTkFrame(self, fg_color="#2b2b2b", width=200)
         self.sidebar.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.sidebar.grid_rowconfigure(6, weight=1)  # Adjusted to accommodate new button
+        self.sidebar.grid_rowconfigure(9, weight=1)  # Push settings to bottom
+        self.sidebar.grid_propagate(False)  # Prevent sidebar from shrinking
         
         # App Title
         title_label = ctk.CTkLabel(
@@ -45,77 +97,95 @@ class MainView(ctk.CTkFrame):
             text="Board Game Designer",
             font=("Helvetica", 16, "bold")
         )
-        title_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        title_label.grid(row=0, column=0, padx=20, pady=(20, 30))
         
         # Navigation Buttons
         self.nav_buttons = {}
         
-        # Projects Button with project name
-        button_text = f"Projects - {self.current_project}" if self.current_project else "Projects"
-        self.nav_buttons["project"] = ctk.CTkButton(
-            self.sidebar,
-            text=button_text,
-            command=lambda: self.show_view("project")
-        )
-        self.nav_buttons["project"].grid(row=1, column=0, padx=20, pady=5)
+        # Define button configurations
+        button_configs = [
+            {
+                "key": "project",
+                "text": f"Projects - {self.current_project}" if self.current_project else "Projects",
+                "row": 1,
+                "icon": "project"
+            },
+            {
+                "key": "component",
+                "text": "Component Editor",
+                "row": 2,
+                "icon": "component"
+            },
+            {
+                "key": "components",
+                "text": "Components Manager",
+                "row": 3,
+                "icon": "components"
+            },
+            {
+                "key": "asset",
+                "text": "Asset Manager",
+                "row": 4,
+                "icon": "asset"
+            },
+            {
+                "key": "template",
+                "text": "Template Manager",
+                "row": 5,
+                "icon": "template"
+            },
+            {
+                "key": "factory",
+                "text": "Card Factory",
+                "row": 6,
+                "icon": "factory"
+            },
+            {
+                "key": "csv",
+                "text": "CSV Datasource",
+                "row": 7,
+                "icon": "csv"
+            },
+            {
+                "key": "pdf",
+                "text": "PDF Exporter",
+                "row": 8,
+                "icon": "pdf"
+            },
+            {
+                "key": "settings",
+                "text": "Settings",
+                "row": 9,
+                "icon": "settings",
+                "sticky": "sew"  # Make settings stick to bottom
+            }
+        ]
         
-        # Component Editor Button
-        self.nav_buttons["component"] = ctk.CTkButton(
-            self.sidebar,
-            text="Component Editor",
-            command=lambda: self.show_view("component")
-        )
-        self.nav_buttons["component"].grid(row=2, column=0, padx=20, pady=5)
-        
-        # Components Manager Button
-        self.nav_buttons["components"] = ctk.CTkButton(
-            self.sidebar,
-            text="Components Manager",
-            command=lambda: self.show_view("components")
-        )
-        self.nav_buttons["components"].grid(row=3, column=0, padx=20, pady=5)
-        
-        # Asset Manager Button
-        self.nav_buttons["asset"] = ctk.CTkButton(
-            self.sidebar,
-            text="Asset Manager",
-            command=lambda: self.show_view("asset")
-        )
-        self.nav_buttons["asset"].grid(row=4, column=0, padx=20, pady=5)
-        
-        # Template Manager Button
-        self.nav_buttons["template"] = ctk.CTkButton(
-            self.sidebar,
-            text="Template Manager",
-            command=lambda: self.show_view("template")
-        )
-        self.nav_buttons["template"].grid(row=5, column=0, padx=20, pady=5)
-        
-        # Card Factory Button (New)
-        self.nav_buttons["factory"] = ctk.CTkButton(
-            self.sidebar,
-            text="Card Factory",
-            command=lambda: self.show_view("factory")
-        )
-        self.nav_buttons["factory"].grid(row=6, column=0, padx=20, pady=5)
-        
-        # CSV Datasource Button
-        self.nav_buttons["csv"] = ctk.CTkButton(
-            self.sidebar,
-            text="CSV Datasource",
-            command=lambda: self.show_view("csv")
-        )
-        self.nav_buttons["csv"].grid(row=7, column=0, padx=20, pady=5)
-        
-        # Settings Button (at bottom)
-        self.nav_buttons["settings"] = ctk.CTkButton(
-            self.sidebar,
-            text="Settings",
-            command=lambda: self.show_view("settings")
-        )
-        self.nav_buttons["settings"].grid(row=8, column=0, padx=20, pady=20, sticky="s")
-        
-        
+        # Create buttons with consistent styling
+        for config in button_configs:
+            self.nav_buttons[config["key"]] = ctk.CTkButton(
+                self.sidebar,
+                text=config["text"],
+                image=self.icons[config["icon"]],
+                command=lambda k=config["key"]: self.show_view(k),
+                anchor="w",  # Align text to the left
+                height=40,
+                corner_radius=8,
+                fg_color="transparent",  # Make button transparent by default
+                text_color=("gray10", "gray90"),
+                hover_color=("gray75", "gray35"),
+                compound="left",  # Place icon to the left of the text
+                width=180
+            )
+            sticky = config.get("sticky", "ew")  # Default to east-west fill
+            self.nav_buttons[config["key"]].grid(
+                row=config["row"],
+                column=0,
+                padx=10,
+                pady=5,
+                sticky=sticky
+            )
+    
     def _create_content_area(self):
         # Content frame with dark theme
         self.content_frame = ctk.CTkFrame(self, fg_color="#1a1a1a")
@@ -132,8 +202,8 @@ class MainView(ctk.CTkFrame):
                 button.configure(fg_color=("gray70", "gray30"))
         
         # Clear current content
-        for widget in self.content_frame.winfo_children():
-            widget.destroy()
+        if self.current_view:
+            self.current_view.destroy()  # Properly destroy the current view
         
         # Show requested view
         if view_name == "project":
@@ -170,13 +240,19 @@ class MainView(ctk.CTkFrame):
                 self.controllers['component'],
                 self.controllers['template']
             )
-        elif view_name == "csv":  # New CSV view
+        elif view_name == "csv":
             self.current_view = CSVManager(
                 self.content_frame,
-                self.controllers['csv']  # You'll need to add this controller
+                self.controllers['csv']
             )
         elif view_name == "factory":
             self.current_view = CardFactory(
+                self.content_frame,
+                self.controllers['template'],
+                self.controllers['csv']
+            )
+        elif view_name == "pdf":  # Add PDF Exporter view
+            self.current_view = PDFExporter(
                 self.content_frame,
                 self.controllers['template'],
                 self.controllers['csv']

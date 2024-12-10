@@ -37,10 +37,6 @@ class SettingsView(ctk.CTkFrame):
         general_tab = self.tabview.add("General")
         self._create_general_settings(general_tab)
         
-        # Theme Settings Tab
-        theme_tab = self.tabview.add("Theme")
-        self._create_theme_settings(theme_tab)
-        
         # Export Settings Tab
         export_tab = self.tabview.add("Export")
         self._create_export_settings(export_tab)
@@ -64,40 +60,6 @@ class SettingsView(ctk.CTkFrame):
         self._create_size_inputs(sizes_frame, "card", "Cards")
         self._create_size_inputs(sizes_frame, "token", "Tokens")
         self._create_size_inputs(sizes_frame, "board", "Boards")
-    
-    def _create_theme_settings(self, parent):
-        theme_frame = ctk.CTkFrame(parent)
-        theme_frame.pack(fill="x", padx=10, pady=5)
-        
-        # Theme Mode
-        ctk.CTkLabel(
-            theme_frame,
-            text="Appearance",
-            font=("Helvetica", 14, "bold")
-        ).pack(anchor="w", pady=5)
-        
-        self.theme_mode_var = ctk.StringVar()
-        theme_mode = ctk.CTkOptionMenu(
-            theme_frame,
-            values=["Light", "Dark", "System"],
-            variable=self.theme_mode_var,
-            command=self._on_theme_change
-        )
-        theme_mode.pack(anchor="w", padx=5, pady=5)
-        
-        # Color Picker
-        ctk.CTkLabel(
-            theme_frame,
-            text="Primary Color",
-            font=("Helvetica", 12)
-        ).pack(anchor="w", padx=5, pady=(10, 0))
-        
-        self.color_picker = ctk.CTkButton(
-            theme_frame,
-            text="Select Color",
-            command=self._show_color_picker
-        )
-        self.color_picker.pack(anchor="w", padx=5, pady=5)
     
     def _create_export_settings(self, parent):
         export_frame = ctk.CTkFrame(parent)
@@ -211,11 +173,6 @@ class SettingsView(ctk.CTkFrame):
     def load_settings(self):
         settings = self.controller.get_settings()
         if settings:
-            # Load and apply theme settings
-            theme_mode = settings['theme']['mode'].capitalize()
-            self.theme_mode_var.set(theme_mode)
-            ctk.set_appearance_mode(theme_mode.lower())  # Actually apply the theme
-            
             # Load size settings
             for component in ['card', 'token', 'board']:
                 if sizes := settings['default_sizes'].get(component):
@@ -238,10 +195,6 @@ class SettingsView(ctk.CTkFrame):
                 return default
 
         settings = {
-            'theme': {
-                'mode': self.theme_mode_var.get().lower(),
-                'primary_color': self.color_picker.cget("fg_color")
-            },
             'default_sizes': {
                 component: {
                     'width': safe_int(getattr(self, f"{component}_width").get()),
@@ -266,9 +219,6 @@ class SettingsView(ctk.CTkFrame):
             settings = self.controller.get_default_settings()
             self.controller.save_settings(settings)
             self.load_settings()
-    
-    def _on_theme_change(self, mode: str):
-        ctk.set_appearance_mode(mode.lower())
     
     def _on_autosave_change(self):
         # Enable/disable interval entry based on autosave switch

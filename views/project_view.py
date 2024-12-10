@@ -21,7 +21,7 @@ class ProjectSelectionView(ctk.CTkFrame):
             text="Board Game Designer",
             font=("Helvetica", 24, "bold")
         )
-        self.title_label.pack(pady=(0, 30))
+        self.title_label.pack(pady=(30, 30))
         
         # Project selection container
         self.selection_container = ctk.CTkFrame(self.main_container)

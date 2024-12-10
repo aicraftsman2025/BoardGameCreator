@@ -315,10 +315,15 @@ class TemplateController:
                     
                     width_scale = preview_width / actual_width
                     height_scale = preview_height / actual_height
+                    print("=== width_scale", width_scale)
+                    print("=== height_scale", height_scale)
+                    print("=== actual_width", actual_width)
+                    print("=== actual_height", actual_height)
                     scale = min(width_scale, height_scale)
-                    
+                    print("=== scale", scale)
                     # Resize preview image
                     preview_size = (int(actual_width * scale), int(actual_height * scale))
+                    print("=== preview_size", preview_size)
                     preview_img = preview_img.resize(preview_size, Image.Resampling.LANCZOS)
                     
                     # Create and display preview
