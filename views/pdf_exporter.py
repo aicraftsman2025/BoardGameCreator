@@ -424,7 +424,7 @@ class PDFExporter(ctk.CTkFrame):
                 self._show_error("No CSV file configured in template")
                 return
             
-            csv_path = os.path.join("./assets/data", csv_file)
+            csv_path = os.path.join("./assets_static/data", csv_file)
             if not os.path.exists(csv_path):
                 self._show_error(f"CSV file not found: {csv_file}")
                 return

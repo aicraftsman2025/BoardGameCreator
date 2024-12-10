@@ -16,7 +16,7 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
         
         super().__init__()
-        self.title("Board Game Designer")
+        self.title("Board Game Creator")
         self.geometry("1024x768")
         
         # Configure dark theme colors

@@ -148,6 +148,15 @@ class CSVManager(ctk.CTkFrame):
                 
                 # Load the CSV
                 self._load_csv(destination)
+                
+                # Refresh the CSV list and select the new file
+                self._load_csv_list()
+                
+                # Update the dropdown to show the new file
+                for widget in self.dropdown_frame.winfo_children():
+                    if isinstance(widget, ctk.CTkOptionMenu):
+                        widget.set(filename)
+                
                 messagebox.showinfo("Success", "CSV imported successfully!")
                 
         except Exception as e:

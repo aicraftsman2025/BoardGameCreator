@@ -18,7 +18,7 @@ class ProjectSelectionView(ctk.CTkFrame):
         # Title
         self.title_label = ctk.CTkLabel(
             self.main_container,
-            text="Board Game Designer",
+            text="Board Game Creator",
             font=("Helvetica", 24, "bold")
         )
         self.title_label.pack(pady=(30, 30))

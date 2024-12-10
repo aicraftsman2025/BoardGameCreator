@@ -116,7 +116,7 @@ class SettingsView(ctk.CTkFrame):
         # App Title
         ctk.CTkLabel(
             about_frame,
-            text="Board Game Designer",
+            text="Board Game Creator",
             font=("Helvetica", 20, "bold")
         ).pack(pady=10)
         
@@ -143,7 +143,7 @@ class SettingsView(ctk.CTkFrame):
         github_button = ctk.CTkButton(
             about_frame,
             text="View on GitHub",
-            command=lambda: webbrowser.open("https://github.com/yourusername/boardgamedesigner")
+            command=lambda: webbrowser.open("https://github.com/haruthuc/boardgamedesigner")
         )
         github_button.pack(pady=10)
         

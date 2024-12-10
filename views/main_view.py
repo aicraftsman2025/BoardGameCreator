@@ -53,11 +53,6 @@ class MainView(ctk.CTkFrame):
                 dark_image=Image.open("assets_static/icons/component.png"),
                 size=(20, 20)
             ),
-            "asset": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/asset.png"),
-                dark_image=Image.open("assets_static/icons/asset.png"),
-                size=(20, 20)
-            ),
             "template": ctk.CTkImage(
                 light_image=Image.open("assets_static/icons/template.png"),
                 dark_image=Image.open("assets_static/icons/template.png"),
@@ -78,6 +73,11 @@ class MainView(ctk.CTkFrame):
                 dark_image=Image.open("assets_static/icons/pdf.png"),
                 size=(20, 20)
             ),
+            "asset": ctk.CTkImage(
+                light_image=Image.open("assets_static/icons/asset.png"),
+                dark_image=Image.open("assets_static/icons/asset.png"),
+                size=(20, 20)
+            ),
             "settings": ctk.CTkImage(
                 light_image=Image.open("assets_static/icons/setting.png"),
                 dark_image=Image.open("assets_static/icons/setting.png"),
@@ -94,7 +94,7 @@ class MainView(ctk.CTkFrame):
         # App Title
         title_label = ctk.CTkLabel(
             self.sidebar,
-            text="Board Game Designer",
+            text="Board Game Creator",
             font=("Helvetica", 16, "bold")
         )
         title_label.grid(row=0, column=0, padx=20, pady=(20, 30))
@@ -123,34 +123,34 @@ class MainView(ctk.CTkFrame):
                 "icon": "components"
             },
             {
-                "key": "asset",
-                "text": "Asset Manager",
-                "row": 4,
-                "icon": "asset"
-            },
-            {
                 "key": "template",
                 "text": "Template Manager",
-                "row": 5,
+                "row": 4,
                 "icon": "template"
             },
             {
                 "key": "factory",
                 "text": "Card Factory",
-                "row": 6,
+                "row": 5,
                 "icon": "factory"
             },
             {
                 "key": "csv",
                 "text": "CSV Datasource",
-                "row": 7,
+                "row": 6,
                 "icon": "csv"
             },
             {
                 "key": "pdf",
                 "text": "PDF Exporter",
-                "row": 8,
+                "row": 7,
                 "icon": "pdf"
+            },
+            {
+                "key": "asset",
+                "text": "Asset Manager",
+                "row": 8,
+                "icon": "asset"
             },
             {
                 "key": "settings",
