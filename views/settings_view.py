@@ -130,7 +130,10 @@ class SettingsView(ctk.CTkFrame):
         # Description
         description = (
             "A powerful tool for designing and creating board game components.\n"
-            "Create cards, tokens, boards, and export them to PDF format."
+            "Create cards, tokens, boards, and export them to PDF format.\n\n"
+            "Special thanks to:\n"
+            "• ChatGPT - For the initial concept and design ideas\n"
+            "• Claude AI - For implementation guidance and code optimization"
         )
         ctk.CTkLabel(
             about_frame,
@@ -150,7 +153,7 @@ class SettingsView(ctk.CTkFrame):
         # Copyright
         ctk.CTkLabel(
             about_frame,
-            text="© 2024 Your Name. All rights reserved.",
+            text="© 2024 chatGPT & Claude AI and Thuc Huynh. All rights reserved.",
             font=("Helvetica", 10)
         ).pack(pady=20)
     

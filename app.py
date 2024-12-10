@@ -8,6 +8,8 @@ from controllers.template_controller import TemplateController
 from controllers.asset_controller import AssetController
 from controllers.settings_controller import SettingsController
 from controllers.csv_controller import CSVController
+import os
+from PIL import Image, ImageTk
 
 class App(ctk.CTk):
     def __init__(self):
@@ -16,8 +18,17 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
         
         super().__init__()
-        self.title("Board Game Creator")
+        self.title("Board Game Designer")
         self.geometry("1024x768")
+        
+        # Set app icon
+        icon_path = os.path.join("assets_static", "icons", "app_icon.png")
+        if os.path.exists(icon_path):
+            # For Windows
+            # Assuming icon_image is your image path
+            icon = Image.open(icon_path)
+            photo = ImageTk.PhotoImage(icon)
+            self.iconphoto(True, photo)
         
         # Configure dark theme colors
         self.configure(fg_color="#1a1a1a")  # Very dark gray background
