@@ -174,7 +174,7 @@ class AssetController:
             folder_name: Optional folder name to filter assets
         
         Returns:
-            int: Number of assets
+            int: Total number of assets
         """
         if folder_name:
             folder_path = os.path.join(self.asset_dir, folder_name)
@@ -269,3 +269,34 @@ class AssetController:
         
         self.asset_dir = new_path
         self.connection.commit()
+    
+    def get_assets_page(self, offset: int = 0, limit: int = 12, folder_name: Optional[str] = None) -> list:
+        """
+        Get paginated assets, optionally filtered by folder
+        
+        Args:
+            offset: Number of records to skip
+            limit: Maximum number of records to return
+            folder_name: Optional folder name to filter assets
+        
+        Returns:
+            list: List of Asset objects for the current page
+        """
+        if folder_name:
+            folder_path = os.path.join(self.asset_dir, folder_name)
+            query = """
+                SELECT * FROM assets 
+                WHERE file_path LIKE ? 
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            """
+            cursor = self.connection.execute(query, (f"{folder_path}%", limit, offset))
+        else:
+            query = """
+                SELECT * FROM assets 
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            """
+            cursor = self.connection.execute(query, (limit, offset))
+        
+        return [Asset.from_db_row(row) for row in cursor.fetchall()]

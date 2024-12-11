@@ -8,6 +8,7 @@ from views.components_manager import ComponentsManager
 from views.csv_manager import CSVManager
 from views.card_factory import CardFactory
 from views.pdf_exporter import PDFExporter
+from views.generative_tools import GenerativeTools
 from PIL import Image
 
 class MainView(ctk.CTkFrame):
@@ -82,6 +83,11 @@ class MainView(ctk.CTkFrame):
                 light_image=Image.open("assets_static/icons/setting.png"),
                 dark_image=Image.open("assets_static/icons/setting.png"),
                 size=(20, 20)
+            ),
+            "generative": ctk.CTkImage(
+                light_image=Image.open("assets_static/icons/generative.png"),
+                dark_image=Image.open("assets_static/icons/generative.png"),
+                size=(20, 20)
             )
         }
 
@@ -155,9 +161,15 @@ class MainView(ctk.CTkFrame):
             {
                 "key": "settings",
                 "text": "Settings",
-                "row": 9,
+                "row": 10,
                 "icon": "settings",
                 "sticky": "sew"  # Make settings stick to bottom
+            },
+            {
+                "key": "generative",
+                "text": "Generative Tools",
+                "row": 9,  # Adjust row number as needed
+                "icon": "generative"
             }
         ]
         
@@ -256,6 +268,11 @@ class MainView(ctk.CTkFrame):
                 self.content_frame,
                 self.controllers['template'],
                 self.controllers['csv']
+            )
+        elif view_name == "generative":
+            self.current_view = GenerativeTools(
+                self.content_frame,
+                self.controllers.get('generative')
             )
         
         if self.current_view:

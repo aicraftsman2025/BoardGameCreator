@@ -13,6 +13,7 @@ class AssetManager(ctk.CTkFrame):
         self.items_per_page = 12
         self.current_page = 1
         self.thumbnail_cache = {}
+        self.total_assets = 0  # Add total assets counter
         
         self._create_toolbar()
         self._create_folder_tree()
@@ -219,9 +220,18 @@ class AssetManager(ctk.CTkFrame):
         for widget in self.grid_frame.winfo_children():
             widget.destroy()
         
-        # Load assets from controller with pagination and folder filtering
-        start_idx = (self.current_page - 1) * self.items_per_page
-        assets = self.controller.get_all_assets(self.current_folder)
+        # Calculate offset for pagination
+        offset = (self.current_page - 1) * self.items_per_page
+        
+        # Get total count for pagination
+        self.total_assets = self.controller.get_assets_count(self.current_folder)
+        
+        # Load assets with pagination
+        assets = self.controller.get_assets_page(
+            offset=offset,
+            limit=self.items_per_page,
+            folder_name=self.current_folder
+        )
         
         if not assets:
             label = ctk.CTkLabel(
@@ -232,19 +242,17 @@ class AssetManager(ctk.CTkFrame):
             label.pack(pady=20)
             return
         
-        # Fixed number of columns for better performance
+        # Fixed number of columns
         num_columns = 3
         
         # Create asset thumbnails
-        assets_to_show = assets[start_idx:start_idx + self.items_per_page]
-        for i, asset in enumerate(assets_to_show):
+        for i, asset in enumerate(assets):
             row = i // num_columns
             col = i % num_columns
             self.create_asset_thumbnail(asset, row, col)
         
         # Update pagination
-        total_assets = len(assets)
-        total_pages = max(1, (total_assets + self.items_per_page - 1) // self.items_per_page)
+        total_pages = max(1, (self.total_assets + self.items_per_page - 1) // self.items_per_page)
         
         self.page_label.configure(text=f"Page {self.current_page} of {total_pages}")
         self.prev_btn.configure(state="normal" if self.current_page > 1 else "disabled")
@@ -356,8 +364,7 @@ class AssetManager(ctk.CTkFrame):
             self.load_assets()
     
     def next_page(self):
-        total_assets = self.controller.get_assets_count()
-        total_pages = (total_assets + self.items_per_page - 1) // self.items_per_page
+        total_pages = (self.total_assets + self.items_per_page - 1) // self.items_per_page
         
         if self.current_page < total_pages:
             self.current_page += 1

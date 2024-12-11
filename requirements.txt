@@ -4,3 +4,6 @@ reportlab>=4.0.0
 pandas>=2.0.0
 openpyxl>=3.1.0  # For Excel file support 
 qrcode>=7.4.2
+matplotlib>=3.8.0  # For generating plots and maps
+numpy>=1.24.0     # Required by matplotlib
+scipy>=1.11.0     # Required for spatial calculations in map generation
