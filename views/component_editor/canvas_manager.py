@@ -40,6 +40,9 @@ class CanvasManager:
         # Subscribe to events
         self._subscribe_to_events()
         print("Event subscriptions completed")  # Debug
+        
+        # Add canvas click binding for focus management
+        self.canvas.bind('<Button-1>', self._handle_canvas_focus, add="+")
     
     def get_frame(self):
         """Return the main frame of the canvas manager"""
@@ -1537,14 +1540,12 @@ class CanvasManager:
                     try:
                         element_id = element.get('id', '')
                         bounds = self._get_element_bounds(element)
-                        label_y = max(10, bounds['y'] - 15)  # Ensure y position is not negative
-                        label_x = max(10, bounds['x'])
                         label = self.canvas.create_text(
-                            label_x,
-                            label_y,  # Use adjusted y position
+                            bounds['x'] + bounds['width']/2,  # Center horizontally
+                            bounds['y'] + bounds['height'] + 10,  # Center vertically
                             text=f"ID: {element_id}",
                             fill="red",
-                            anchor="w",
+                            anchor="center",
                             tags=f"id_label_{element_id}"
                         )
                         print(f"Created label for element {element_id}")  # Debug
@@ -1561,3 +1562,10 @@ class CanvasManager:
             print(f"Error in render_elements_ondemand: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _handle_canvas_focus(self, event):
+        """Handle canvas focus when clicked"""
+        # Force focus to canvas to blur any active entry widgets
+        self.canvas.focus_set()
+        # Continue with normal click handling
+        return self._on_canvas_click(event)

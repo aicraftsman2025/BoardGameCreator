@@ -34,10 +34,6 @@ class SettingsView(ctk.CTkFrame):
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
         
-        # General Settings Tab (API Keys)
-        general_tab = self.tabview.add("General")
-        self._create_general_settings(general_tab)
-        
         # Export Settings Tab (Paths)
         export_tab = self.tabview.add("Export")
         self._create_export_settings(export_tab)
@@ -45,41 +41,6 @@ class SettingsView(ctk.CTkFrame):
         # About Tab
         about_tab = self.tabview.add("About")
         self._create_about_tab(about_tab)
-    
-    def _create_general_settings(self, parent):
-        # API Keys Frame
-        api_frame = ctk.CTkFrame(parent)
-        api_frame.pack(fill="x", padx=10, pady=5)
-        
-        # OpenAI API Key
-        ctk.CTkLabel(
-            api_frame,
-            text="OpenAI API Key",
-            font=("Helvetica", 14, "bold")
-        ).pack(anchor="w", pady=5)
-        
-        self.openai_key = ctk.CTkEntry(
-            api_frame,
-            placeholder_text="Enter OpenAI API Key",
-            width=400,
-            show="•"
-        )
-        self.openai_key.pack(anchor="w", padx=5, pady=5)
-        
-        # Claude AI API Key
-        ctk.CTkLabel(
-            api_frame,
-            text="Claude AI API Key",
-            font=("Helvetica", 14, "bold")
-        ).pack(anchor="w", pady=5)
-        
-        self.claude_key = ctk.CTkEntry(
-            api_frame,
-            placeholder_text="Enter Claude AI API Key",
-            width=400,
-            show="•"
-        )
-        self.claude_key.pack(anchor="w", padx=5, pady=5)
     
     def _create_export_settings(self, parent):
         paths_frame = ctk.CTkFrame(parent)
@@ -180,23 +141,12 @@ class SettingsView(ctk.CTkFrame):
     def load_settings(self):
         settings = self.controller.get_settings()
         if settings:
-            # Load API Keys
-            self.openai_key.delete(0, 'end')
-            self.openai_key.insert(0, settings.get('api_keys', {}).get('openai', ''))
-            
-            self.claude_key.delete(0, 'end')
-            self.claude_key.insert(0, settings.get('api_keys', {}).get('claude', ''))
-            
-            # Load Paths
+            # Load Paths only
             self.assets_path.delete(0, 'end')
             self.assets_path.insert(0, settings.get('paths', {}).get('assets', 'assets'))
     
     def save_settings(self):
         settings = {
-            'api_keys': {
-                'openai': self.openai_key.get(),
-                'claude': self.claude_key.get()
-            },
             'paths': {
                 'assets': self.assets_path.get() or 'assets'
             }

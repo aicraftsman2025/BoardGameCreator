@@ -3,10 +3,11 @@ import tkinter as tk
 import customtkinter as ctk
 
 class ConfigWidget:
-    def __init__(self, parent, name, label, widget_type, **kwargs):
+    def __init__(self, parent, name, label, widget_type, visible=True, **kwargs):
         self.name = name
         self.frame = ctk.CTkFrame(parent)
-        self.frame.pack(fill="x", padx=5, pady=2)
+        if visible:
+            self.frame.pack(fill="x", padx=5, pady=2)
         
         ctk.CTkLabel(
             self.frame,
@@ -17,7 +18,17 @@ class ConfigWidget:
         self.widget.pack(side="right", padx=5)
     
     def get(self):
+        if isinstance(self.widget, ctk.CTkTextbox):
+            return self.widget.get("1.0", "end-1c")  # Get all text, excluding the final newline
         return self.widget.get()
+    
+    def show(self):
+        """Show the config widget"""
+        self.frame.pack(fill="x", padx=5, pady=2)
+    
+    def hide(self):
+        """Hide the config widget"""
+        self.frame.pack_forget()
 
 class BaseScript(ABC):
     def __init__(self):
@@ -38,7 +49,7 @@ class BaseScript(ABC):
         """Create the configuration dialog"""
         self.dialog = ctk.CTkToplevel(parent)
         self.dialog.title(self.get_title())
-        self.dialog.geometry("800x600")
+        self.dialog.geometry("1000x750")
         
         # Main container
         main_frame = ctk.CTkFrame(self.dialog)
@@ -51,12 +62,12 @@ class BaseScript(ABC):
         # Get script-specific config widgets
         self.config_widgets = self.get_config_widgets(config_frame)
         
-        # Output section
+        # Output section with reduced height
         output_frame = ctk.CTkFrame(main_frame)
-        output_frame.pack(fill="both", expand=True, padx=5, pady=5)
+        output_frame.pack(fill="x", padx=5, pady=5)
         
-        self.output = ctk.CTkTextbox(output_frame)
-        self.output.pack(fill="both", expand=True, padx=5, pady=5)
+        self.output = ctk.CTkTextbox(output_frame, height=100)
+        self.output.pack(fill="x", padx=5, pady=5)
         
         # Buttons
         button_frame = ctk.CTkFrame(main_frame)

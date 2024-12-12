@@ -112,49 +112,49 @@ class MainView(ctk.CTkFrame):
         button_configs = [
             {
                 "key": "project",
-                "text": f"Projects - {self.current_project}" if self.current_project else "Projects",
+                "text": f"Project: {self.current_project or 'Select Project'}",
                 "row": 1,
                 "icon": "project"
             },
             {
                 "key": "component",
-                "text": "Component Editor",
+                "text": "Design Component",
                 "row": 2,
                 "icon": "component"
             },
             {
                 "key": "components",
-                "text": "Components Manager",
+                "text": "Manage Components",
                 "row": 3,
                 "icon": "components"
             },
             {
                 "key": "template",
-                "text": "Template Manager",
+                "text": "Card Templates",
                 "row": 4,
                 "icon": "template"
             },
             {
                 "key": "factory",
-                "text": "Card Factory",
+                "text": "Export Cards",
                 "row": 5,
                 "icon": "factory"
             },
             {
                 "key": "csv",
-                "text": "CSV Datasource",
+                "text": "Import Data",
                 "row": 6,
                 "icon": "csv"
             },
             {
                 "key": "pdf",
-                "text": "PDF Exporter",
+                "text": "Export to PDF",
                 "row": 7,
                 "icon": "pdf"
             },
             {
                 "key": "asset",
-                "text": "Asset Manager",
+                "text": "Asset Library",
                 "row": 8,
                 "icon": "asset"
             },
@@ -163,12 +163,12 @@ class MainView(ctk.CTkFrame):
                 "text": "Settings",
                 "row": 10,
                 "icon": "settings",
-                "sticky": "sew"  # Make settings stick to bottom
+                "sticky": "sew"
             },
             {
                 "key": "generative",
                 "text": "Generative Tools",
-                "row": 9,  # Adjust row number as needed
+                "row": 9,
                 "icon": "generative"
             }
         ]

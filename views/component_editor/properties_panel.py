@@ -59,6 +59,9 @@ class PropertiesPanel(ctk.CTkFrame):
         ctk.CTkLabel(width_frame, text="Width:").pack(side="left", padx=5)
         width_entry = ctk.CTkEntry(width_frame, textvariable=self.width_var, width=50)
         width_entry.pack(side="left", padx=2)
+        width_entry.bind('<FocusOut>', lambda e: self._validate_entry(self.width_var))
+        width_entry.bind('<Return>', lambda e: self._handle_entry_return(e, width_entry))
+        self.width_entry = width_entry  # Store reference
         
         # Height
         height_frame = ctk.CTkFrame(dims_frame)
@@ -66,6 +69,9 @@ class PropertiesPanel(ctk.CTkFrame):
         ctk.CTkLabel(height_frame, text="Height:").pack(side="left", padx=5)
         height_entry = ctk.CTkEntry(height_frame, textvariable=self.height_var, width=50)
         height_entry.pack(side="left", padx=2)
+        height_entry.bind('<FocusOut>', lambda e: self._validate_entry(self.height_var))
+        height_entry.bind('<Return>', lambda e: self._handle_entry_return(e, height_entry))
+        self.height_entry = height_entry  # Store reference
         
         # Unit Selection
         unit_frame = ctk.CTkFrame(dims_frame)
@@ -232,6 +238,12 @@ class PropertiesPanel(ctk.CTkFrame):
             EventType.ELEMENT_SELECTED,
             self._update_properties
         )
+        
+        # Add subscription for canvas clicks
+        self.event_manager.subscribe(
+            EventType.CANVAS_CLICKED,
+            self._handle_canvas_click
+        )
     
     def _update_properties(self, element):
         """Update properties based on selected element"""
@@ -308,3 +320,23 @@ class PropertiesPanel(ctk.CTkFrame):
             print(f"Error exporting component: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _validate_entry(self, var: ctk.StringVar):
+        """Validate entry value is numeric"""
+        try:
+            value = float(var.get())
+            if value <= 0:
+                var.set("1")  # Set to minimum valid value
+        except ValueError:
+            var.set("1")  # Reset to default if invalid
+            
+    def _handle_entry_return(self, event, entry_widget):
+        """Handle Return key press in entry widget"""
+        entry_widget.master.focus_set()  # Focus parent frame to blur entry
+    
+    def _handle_canvas_click(self, data):
+        """Handle canvas click events by removing focus from entries"""
+        if hasattr(self, 'width_entry'):
+            self.width_entry.master.focus_set()
+        if hasattr(self, 'height_entry'):
+            self.height_entry.master.focus_set()

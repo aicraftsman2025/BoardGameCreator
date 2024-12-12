@@ -9,14 +9,14 @@ class TextDialog(BaseDialog):
     def __init__(self, parent, element, on_save):
         self.on_save = on_save
         super().__init__(parent, element, "Edit Text")
-        self.dialog.geometry("400x650")
+        self.dialog.geometry("400x450")
     
     def _create_ui(self):
         # Text content
         text_frame = ctk.CTkFrame(self.dialog)
         text_frame.pack(fill="both", expand=True, padx=20, pady=10)
         
-        self.text_area = ctk.CTkTextbox(text_frame, height=200)
+        self.text_area = ctk.CTkTextbox(text_frame, height=100)
         self.text_area.pack(fill="both", expand=True, padx=5, pady=5)
         self.text_area.insert("1.0", self.properties.get('text', ''))
         

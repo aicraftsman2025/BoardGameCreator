@@ -219,14 +219,6 @@ class ComponentsManager(ctk.CTkFrame):
         card = ctk.CTkFrame(self.list_frame)
         card.pack(fill="x", padx=5, pady=5)
         
-        # Preview frame (left side)
-        preview_frame = ctk.CTkFrame(card, width=150, height=150)
-        preview_frame.pack(side="left", padx=10, pady=10)
-        
-        # For now, just show placeholder text
-        preview_label = ctk.CTkLabel(preview_frame, text="Preview")
-        preview_label.pack(expand=True)
-        
         # Info frame (middle)
         info_frame = ctk.CTkFrame(card)
         info_frame.pack(side="left", fill="both", expand=True, padx=10, pady=10)

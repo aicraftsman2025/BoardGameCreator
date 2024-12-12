@@ -7,3 +7,4 @@ qrcode>=7.4.2
 matplotlib>=3.8.0  # For generating plots and maps
 numpy>=1.24.0     # Required by matplotlib
 scipy>=1.11.0     # Required for spatial calculations in map generation
+perchance==0.0.1

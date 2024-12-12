@@ -22,13 +22,16 @@ class App(ctk.CTk):
         self.geometry("1024x768")
         
         # Set app icon
-        icon_path = os.path.join("assets_static", "icons", "app_icon.png")
+        icon_path = os.path.join("assets_static", "icons", "app_icon.ico")
         if os.path.exists(icon_path):
             # For Windows
-            # Assuming icon_image is your image path
-            icon = Image.open(icon_path)
-            photo = ImageTk.PhotoImage(icon)
-            self.iconphoto(True, photo)
+            if os.name == 'nt':  # Check if running on Windows
+                self.iconbitmap(icon_path)  # Use .ico format on Windows
+            else:
+                # For other platforms like Linux/Mac
+                icon = Image.open(icon_path)
+                photo = ImageTk.PhotoImage(icon)
+                self.iconphoto(True, photo)
         
         # Configure dark theme colors
         self.configure(fg_color="#1a1a1a")  # Very dark gray background

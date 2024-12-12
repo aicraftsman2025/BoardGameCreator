@@ -77,8 +77,14 @@ class GenerativeTools(ctk.CTkFrame):
                 script_path="./utils/scripts/generate_crossword.py",
                 icon_path="assets_static/icons/crossword.png"
             ),
-            # Add more script apps here
-        ]
+            ScriptApp(
+                title="Generate AI Assets",
+                description="Generate pixel art assets using AI from CSV prompts.",
+                script_path="./utils/scripts/generate_asset_ai.py",
+                icon_path="assets_static/icons/ai_asset.png"  # Add appropriate icon
+            ),
+                # Add more script apps here
+            ]
     
     def _populate_tools_grid(self):
         """Populate the grid with script app cards"""
