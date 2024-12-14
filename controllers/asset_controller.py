@@ -7,25 +7,20 @@ from PIL import Image
 from typing import Optional
 import sqlite3
 from controllers.settings_controller import SettingsController
+from config import get_config
 
 class AssetController:
     def __init__(self, db):
-        # If db is a DatabaseManager instance, get its path
-        if hasattr(db, 'db_path'):
-            db_path = db.db_path
-        elif isinstance(db, str):
-            db_path = db
-        else:
-            db_path = db
-        
-        self.connection = sqlite3.connect(db_path)
-        self.connection.row_factory = sqlite3.Row
-        self.initialize_database()
-        
+        self.db = db
+        self.config = get_config()  # Get config instance
         # Get asset directory from settings or use default
-        settings_controller = SettingsController(db_path)
+        settings_controller = SettingsController(db)
         settings = settings_controller.get_settings()
-        self.asset_dir = settings.get('paths', {}).get('assets', "assets")
+        assets_path = settings.get('paths', {}).get('assets')
+        if assets_path and assets_path != "assets":
+            self.asset_dir = assets_path
+        else:
+            self.asset_dir = self.config.ASSETS_PATH
         os.makedirs(self.asset_dir, exist_ok=True)
     
     def import_asset(self, file_path: str, folder_name: Optional[str] = None) -> Asset:
@@ -59,7 +54,7 @@ class AssetController:
             (name, folder, file_path, file_type, metadata)
             VALUES (?, ?, ?, ?, ?)
         """
-        cursor = self.connection.execute(
+        cursor = self.db.execute(
             query,
             (
                 name,
@@ -69,13 +64,13 @@ class AssetController:
                 json.dumps(metadata)
             )
         )
-        self.connection.commit()
+        self.db.commit()
         
         return self.get_asset_by_id(cursor.lastrowid)
     
     def get_asset_by_id(self, asset_id: int) -> Asset:
         query = "SELECT * FROM assets WHERE asset_id = ?"
-        cursor = self.connection.execute(query, (asset_id,))
+        cursor = self.db.execute(query, (asset_id,))
         row = cursor.fetchone()
         return Asset.from_db_row(row) if row else None
     
@@ -92,11 +87,11 @@ class AssetController:
         if folder_name:
             folder_path = os.path.join(self.asset_dir, folder_name)
             query = "SELECT * FROM assets WHERE file_path LIKE ? ORDER BY created_at DESC"
-            cursor = self.connection.cursor()
+            cursor = self.db.cursor()
             cursor = cursor.execute(query, (f"{folder_path}%",))
         else:
             query = "SELECT * FROM assets ORDER BY created_at DESC"
-            cursor = self.connection.cursor()
+            cursor = self.db.cursor()
             cursor = cursor.execute(query)
         
         return [Asset.from_db_row(row) for row in cursor.fetchall()]
@@ -113,8 +108,8 @@ class AssetController:
         
         # Delete from database
         query = "DELETE FROM assets WHERE asset_id = ?"
-        self.connection.execute(query, (asset_id,))
-        self.connection.commit()
+        self.db.execute(query, (asset_id,))
+        self.db.commit()
         
         return True
     
@@ -179,10 +174,10 @@ class AssetController:
         if folder_name:
             folder_path = os.path.join(self.asset_dir, folder_name)
             query = "SELECT COUNT(*) as count FROM assets WHERE file_path LIKE ?"
-            cursor = self.connection.execute(query, (f"{folder_path}%",))
+            cursor = self.db.execute(query, (f"{folder_path}%",))
         else:
             query = "SELECT COUNT(*) as count FROM assets"
-            cursor = self.connection.execute(query)
+            cursor = self.db.execute(query)
         
         result = cursor.fetchone()
         return result['count'] if result else 0
@@ -217,8 +212,8 @@ class AssetController:
             if os.path.exists(folder_path):
                 # Delete all assets in the folder from database
                 query = "DELETE FROM assets WHERE file_path LIKE ?"
-                self.connection.execute(query, (f"{folder_path}%",))
-                self.connection.commit()
+                self.db.execute(query, (f"{folder_path}%",))
+                self.db.commit()
                 
                 # Delete the physical folder
                 shutil.rmtree(folder_path)
@@ -229,7 +224,7 @@ class AssetController:
             return False
     
     def initialize_database(self):
-        cursor = self.connection.cursor()
+        cursor = self.db.cursor()
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS assets (
                 asset_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,7 +236,7 @@ class AssetController:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        self.connection.commit()
+        self.db.commit()
     
     def update_asset_path(self, new_path: str):
         """Update the asset directory path and move existing assets"""
@@ -265,10 +260,10 @@ class AssetController:
                         SET file_path = REPLACE(file_path, ?, ?)
                         WHERE file_path LIKE ?
                     """
-                    self.connection.execute(query, (self.asset_dir, new_path, f"{self.asset_dir}%"))
+                    self.db.execute(query, (self.asset_dir, new_path, f"{self.asset_dir}%"))
         
         self.asset_dir = new_path
-        self.connection.commit()
+        self.db.commit()
     
     def get_assets_page(self, offset: int = 0, limit: int = 12, folder_name: Optional[str] = None) -> list:
         """
@@ -290,13 +285,13 @@ class AssetController:
                 ORDER BY created_at DESC
                 LIMIT ? OFFSET ?
             """
-            cursor = self.connection.execute(query, (f"{folder_path}%", limit, offset))
+            cursor = self.db.execute(query, (f"{folder_path}%", limit, offset))
         else:
             query = """
                 SELECT * FROM assets 
                 ORDER BY created_at DESC
                 LIMIT ? OFFSET ?
             """
-            cursor = self.connection.execute(query, (limit, offset))
+            cursor = self.db.execute(query, (limit, offset))
         
         return [Asset.from_db_row(row) for row in cursor.fetchall()]

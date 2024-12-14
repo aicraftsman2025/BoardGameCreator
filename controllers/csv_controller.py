@@ -2,10 +2,12 @@ import os
 import pandas as pd
 from typing import List, Dict, Optional
 import shutil
+from config import get_config
 
 class CSVController:
     def __init__(self):
-        self.data_dir = "./assets_static/data"
+        self.config = get_config()  # Get config instance
+        self.data_dir = self.config.USER_DATA_DIR / "data"
         # Create data directory if it doesn't exist
         os.makedirs(self.data_dir, exist_ok=True)
     

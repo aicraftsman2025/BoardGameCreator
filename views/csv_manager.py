@@ -4,11 +4,12 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import shutil
 import os
-
+from config import get_config
 class CSVManager(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
+        self.config = get_config()
         self.current_csv = None
         self.data = None
         
@@ -138,7 +139,7 @@ class CSVManager(ctk.CTkFrame):
             
             if file_path:
                 # Create data directory if it doesn't exist
-                data_dir = "./assets_static/data"
+                data_dir = self.config.USER_DATA_DIR / "data"
                 os.makedirs(data_dir, exist_ok=True)
                 
                 # Copy file to data directory
@@ -313,7 +314,7 @@ class CSVManager(ctk.CTkFrame):
                 
                 # Load first CSV file if no file is currently loaded
                 if not self.current_csv and csv_files:
-                    self._load_csv(os.path.join("./assets_static/data", csv_files[0]))
+                    self._load_csv(self.config.USER_DATA_DIR / "data" / csv_files[0])
             else:
                 # Show message if no CSV files
                 ctk.CTkLabel(
@@ -328,7 +329,7 @@ class CSVManager(ctk.CTkFrame):
     def _on_csv_selected(self, choice):
         """Handle CSV selection from dropdown"""
         try:
-            file_path = os.path.join("./assets_static/data", choice)
+            file_path = os.path.join(self.config.USER_DATA_DIR / "data", choice)
             self._load_csv(file_path)
         except Exception as e:
             print(f"Error selecting CSV: {e}")

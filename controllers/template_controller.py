@@ -10,7 +10,7 @@ from PIL import Image, ImageTk
 import base64
 import io
 import customtkinter as ctk
-
+from config import get_config
 
 try:
     from views.component_editor.canvas_manager import CanvasManager
@@ -21,11 +21,11 @@ except ImportError:
     from ..views.component_editor.canvas_manager import CanvasManager
     from ..views.component_editor.element_manager import ElementManager
     from ..views.component_editor.events.event_manager import EventManager
-import tempfile
 import tkinter as tk
 
 class TemplateController:
     def __init__(self, db_manager):
+        self.config = get_config()  # Get config instance
         self.template_manager = TemplateManager(db_manager)
         self.component_controller = ComponentController(db_manager)
     def save_template(self, name: str, template_data: dict) -> bool:
@@ -129,7 +129,7 @@ class TemplateController:
                 return False
             
             # Load CSV data
-            data_path = os.path.join("./assets_static/data", csv_file)
+            data_path = self.config.USER_DATA_DIR / "data" / csv_file
             df = pd.read_csv(data_path)
             
             # Create components for each row

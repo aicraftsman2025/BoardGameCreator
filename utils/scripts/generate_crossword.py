@@ -6,9 +6,13 @@ import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 from tkinter import filedialog
-
+from config import get_config
 
 class CrosswordGenerator(BaseScript):
+    def __init__(self):
+        self.config = get_config()
+        super().__init__()
+        
     def get_title(self):
         return "Generate Crossword"
     
@@ -86,7 +90,7 @@ class CrosswordGenerator(BaseScript):
     def _get_csv_files(self):
         """Get list of available CSV files"""
         try:
-            data_dir = "./assets_static/data"
+            data_dir =  self.config.USER_DATA_DIR / "data"
             return [f for f in os.listdir(data_dir) if f.endswith('.csv')]
         except Exception:
             return []
@@ -94,7 +98,7 @@ class CrosswordGenerator(BaseScript):
     def _get_csv_columns(self, csv_file):
         """Get list of columns from CSV file"""
         try:
-            csv_path = os.path.join("./assets_static/data", csv_file)
+            csv_path = self.config.USER_DATA_DIR / "data" / csv_file
             df = pd.read_csv(csv_path, nrows=0)  # Read only header
             return df.columns.tolist()
         except Exception as e:
@@ -191,7 +195,7 @@ class CrosswordGenerator(BaseScript):
         """Load words from CSV file within specified row range and column"""
         try:
             # Construct full path to CSV file
-            csv_path = os.path.join("./assets_static/data", csv_file)
+            csv_path = self.config.USER_DATA_DIR / "data" / csv_file
             
             # Read CSV file
             df = pd.read_csv(csv_path)

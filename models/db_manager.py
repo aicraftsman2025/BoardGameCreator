@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 
 class DatabaseManager:
-    def __init__(self):
-        self.db_path = "boardgame.db"
+    def __init__(self, db_path):
+        self.db_path = db_path
         self.init_database()
     
     def init_database(self):

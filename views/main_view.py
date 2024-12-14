@@ -11,11 +11,15 @@ from views.pdf_exporter import PDFExporter
 from views.generative_tools import GenerativeTools
 from PIL import Image
 
+import logging
+import os
+from config import get_config
+
 class MainView(ctk.CTkFrame):
     def __init__(self, parent, controllers):
         super().__init__(parent)
         self.configure(fg_color="#1a1a1a")  # Match app's dark background
-        
+        self.config = get_config()
         self.controllers = controllers
         self.current_view = None
         
@@ -38,58 +42,42 @@ class MainView(ctk.CTkFrame):
     
     def _create_sidebar(self):
         # Import icons
-        self.icons = {
-            "project": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/project.png"),
-                dark_image=Image.open("assets_static/icons/project.png"),
-                size=(20, 20)
-            ),
-            "component": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/component.png"),
-                dark_image=Image.open("assets_static/icons/component.png"),
-                size=(20, 20)
-            ),
-            "components": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/component.png"),
-                dark_image=Image.open("assets_static/icons/component.png"),
-                size=(20, 20)
-            ),
-            "template": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/template.png"),
-                dark_image=Image.open("assets_static/icons/template.png"),
-                size=(20, 20)
-            ),
-            "factory": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/factory.png"),
-                dark_image=Image.open("assets_static/icons/factory.png"),
-                size=(20, 20)
-            ),
-            "csv": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/csv.png"),
-                dark_image=Image.open("assets_static/icons/csv.png"),
-                size=(20, 20)
-            ),
-            "pdf": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/pdf.png"),
-                dark_image=Image.open("assets_static/icons/pdf.png"),
-                size=(20, 20)
-            ),
-            "asset": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/asset.png"),
-                dark_image=Image.open("assets_static/icons/asset.png"),
-                size=(20, 20)
-            ),
-            "settings": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/setting.png"),
-                dark_image=Image.open("assets_static/icons/setting.png"),
-                size=(20, 20)
-            ),
-            "generative": ctk.CTkImage(
-                light_image=Image.open("assets_static/icons/generative.png"),
-                dark_image=Image.open("assets_static/icons/generative.png"),
-                size=(20, 20)
-            )
-        }
+        try:
+            self.icons = {}
+            icon_mappings = {
+                "project": "project.png",
+                "component": "component.png",
+                "components": "component.png",
+                "template": "template.png",
+                "factory": "factory.png",
+                "csv": "csv.png",
+                "pdf": "pdf.png",
+                "asset": "asset.png",
+                "settings": "setting.png",
+                "generative": "generative.png"
+            }
+            
+            for key, filename in icon_mappings.items():
+                icon_path = os.path.join(self.config.ASSETS_STATIC_PATH, "icons", filename)
+                if os.path.exists(icon_path):
+                    try:
+                        image = Image.open(icon_path)
+                        self.icons[key] = ctk.CTkImage(
+                            light_image=image,
+                            dark_image=image,
+                            size=(20, 20)
+                        )
+                    except Exception as e:
+                        logging.error(f"Failed to load icon {filename}: {str(e)}")
+                        self.icons[key] = None  # Use None as fallback
+                else:
+                    logging.error(f"Icon not found: {icon_path}")
+                    self.icons[key] = None
+        except Exception as e:
+            logging.error(f"Error loading icons: {str(e)}")
+    
+
+       
 
         # Sidebar frame with dark theme
         self.sidebar = ctk.CTkFrame(self, fg_color="#2b2b2b", width=200)

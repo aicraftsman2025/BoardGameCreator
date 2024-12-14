@@ -2,11 +2,12 @@ import json
 import os
 from pathlib import Path
 from datetime import datetime
-
+from config import get_config
 class TemplateManager:
     def __init__(self, db_manager):
         self.db_manager = db_manager
-        self.templates_dir = Path("assets_static/templates")
+        self.config = get_config()  # Get config instance
+        self.templates_dir = self.config.USER_DATA_DIR / "templates"
         self.templates_dir.mkdir(parents=True, exist_ok=True)
         
     def save_template(self, name: str, template_data: dict) -> bool:

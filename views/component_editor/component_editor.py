@@ -14,7 +14,6 @@ import os
 import json
 import tkinter.messagebox as messagebox
 
-
 class ComponentEditor(ctk.CTkFrame):
     def __init__(self, parent, component_controller, template_controller, asset_controller):
         super().__init__(parent)

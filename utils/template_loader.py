@@ -1,9 +1,10 @@
 import os
 import json
 from typing import Dict, List
-
+from config import get_config
 class TemplateLoader:
-    def __init__(self, template_dir="assets_static/templates"):
+    def __init__(self, template_dir=get_config.USER_DATA_DIR / "templates"):
+        self.config = get_config()  # Get config instance
         self.template_dir = template_dir
     
     def load_all_templates(self) -> List[Dict]:

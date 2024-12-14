@@ -3,13 +3,18 @@ from PIL import Image
 import os
 import importlib.util
 import sys
+from config import get_config
+import logging
+
 
 class ScriptApp:
     def __init__(self, title, description, script_path, icon_path=None):
         self.title = title
         self.description = description
         self.script_path = script_path
-        self.icon_path = icon_path or "assets_static/icons/script.png"
+        self.config = get_config()
+        # Use ASSETS_STATIC_PATH for default icon path
+        self.icon_path = icon_path or os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "script.png")
         self.module = None
         
     def load_module(self):
@@ -24,14 +29,14 @@ class ScriptApp:
             spec.loader.exec_module(self.module)
             return True
         except Exception as e:
-            print(f"Error loading module {self.script_path}: {e}")
+            logging.error(f"Error loading module {self.script_path}: {e}")
             return False
 
 class GenerativeTools(ctk.CTkFrame):
     def __init__(self, parent, controller=None):
         super().__init__(parent)
         self.controller = controller
-        
+        self.config = get_config()
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -69,22 +74,21 @@ class GenerativeTools(ctk.CTkFrame):
                 title="Generate Map",
                 description="Generate a random board game map with different node types and connections.",
                 script_path="./utils/scripts/generate_map.py",
-                icon_path="assets_static/icons/map.png"
+                icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "map.png")
             ),
             ScriptApp(
                 title="Generate Crossword",
                 description="Create crossword puzzles from word lists in CSV files.",
                 script_path="./utils/scripts/generate_crossword.py",
-                icon_path="assets_static/icons/crossword.png"
+                icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "crossword.png")
             ),
             ScriptApp(
                 title="Generate AI Assets",
                 description="Generate pixel art assets using AI from CSV prompts.",
                 script_path="./utils/scripts/generate_asset_ai.py",
-                icon_path="assets_static/icons/ai_asset.png"  # Add appropriate icon
+                icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "ai_asset.png")
             ),
-                # Add more script apps here
-            ]
+        ]
     
     def _populate_tools_grid(self):
         """Populate the grid with script app cards"""
@@ -100,14 +104,20 @@ class GenerativeTools(ctk.CTkFrame):
         
         # Icon
         try:
-            icon_image = ctk.CTkImage(
-                light_image=Image.open(app.icon_path),
-                dark_image=Image.open(app.icon_path),
-                size=(32, 32)
-            )
-            icon = ctk.CTkLabel(card, image=icon_image, text="")
-            icon.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
-        except Exception:
+            if os.path.exists(app.icon_path):
+                icon_image = ctk.CTkImage(
+                    light_image=Image.open(app.icon_path),
+                    dark_image=Image.open(app.icon_path),
+                    size=(32, 32)
+                )
+                icon = ctk.CTkLabel(card, image=icon_image, text="")
+                icon.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
+            else:
+                logging.warning(f"Icon not found at: {app.icon_path}")
+                icon = ctk.CTkLabel(card, text="📜")
+                icon.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
+        except Exception as e:
+            logging.error(f"Error loading icon for {app.title}: {e}")
             # Fallback if icon loading fails
             icon = ctk.CTkLabel(card, text="📜")
             icon.grid(row=0, column=0, rowspan=2, padx=10, pady=10)

@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from typing import List, Optional
+from config import get_config
 
 # Global variables to store selection
 selected_project = None
@@ -10,6 +11,7 @@ class ProjectSelectionView(ctk.CTkFrame):
         super().__init__(parent)
         self.on_project_selected = on_project_selected
         self.controller = controller
+        self.config = get_config()  # Get config instance
         
         # Create main container
         self.main_container = ctk.CTkFrame(self)

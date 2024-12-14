@@ -19,8 +19,7 @@ class SettingsController:
     def get_settings(self) -> Optional[Dict]:
         """Get current application settings"""
         query = "SELECT settings FROM app_settings WHERE id = 1"
-        cursor = self.db.cursor()
-        result = cursor.execute(query).fetchone()
+        result = self.db.execute(query).fetchone()
         
         if result:
             return json.loads(result['settings'])
@@ -32,8 +31,7 @@ class SettingsController:
             INSERT OR REPLACE INTO app_settings (id, settings)
             VALUES (1, ?)
         """
-        cursor = self.db.cursor()
-        cursor.execute(query, (json.dumps(settings),))
+        self.db.execute(query, (json.dumps(settings),))
         self.db.commit()
         return True
     
@@ -70,8 +68,7 @@ class SettingsController:
     
     def initialize_database(self):
         """Initialize the settings table"""
-        cursor = self.db.cursor()
-        cursor.execute('''
+        self.db.execute('''
             CREATE TABLE IF NOT EXISTS app_settings (
                 id INTEGER PRIMARY KEY,
                 settings TEXT NOT NULL
@@ -79,8 +76,8 @@ class SettingsController:
         ''')
         
         # Insert default settings if not exists
-        cursor.execute("SELECT COUNT(*) FROM app_settings WHERE id = 1")
-        if cursor.fetchone()[0] == 0:
+        self.db.execute("SELECT COUNT(*) FROM app_settings WHERE id = 1")
+        if self.db.fetchone()[0] == 0:
             self.save_settings(self._get_default_settings())
         
         self.db.commit()

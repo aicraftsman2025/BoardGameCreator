@@ -4,12 +4,14 @@ from tkinter import filedialog
 import pandas as pd
 import os
 from typing import Dict, List
+from config import get_config
 
 class CardFactory(ctk.CTkFrame):
     def __init__(self, parent, template_controller, csv_controller):
         super().__init__(parent)
         self.template_controller = template_controller
         self.csv_controller = csv_controller
+        self.config = get_config()
         self._create_ui()
         self._load_templates()
     
@@ -227,7 +229,7 @@ class CardFactory(ctk.CTkFrame):
                 if template_data and 'data_source' in template_data:
                     csv_file = template_data['data_source'].get('file')
                     if csv_file:
-                        df = pd.read_csv(os.path.join("./assets_static/data", csv_file))
+                        df = pd.read_csv(self.config.USER_DATA_DIR / "data" / csv_file)
                         return list(df.columns)
             return ["No columns available"]
         except Exception:
@@ -365,7 +367,7 @@ class CardFactory(ctk.CTkFrame):
                 self._show_error("No CSV file configured in template")
                 return
             
-            df = pd.read_csv(os.path.join("./assets_static/data", csv_file))
+            df = pd.read_csv(self.config.USER_DATA_DIR / "data" / csv_file)
             
             # Apply filters
             df = self._apply_filters(df)

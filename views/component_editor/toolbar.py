@@ -3,12 +3,15 @@ from PIL import Image
 from typing import Dict, Callable
 from .events.event_types import EventType
 from .events.event_manager import EventManager
+from config import get_config
+import os
+import logging
 
 class Toolbar(ctk.CTkFrame):
     def __init__(self, parent, event_manager: EventManager):
         super().__init__(parent)
         self.event_manager = event_manager
-        
+        self.config = get_config()
         # Initialize tool variable
         self.tool_var = ctk.StringVar(value="select")
         self.tool_buttons: Dict = {}
@@ -41,25 +44,33 @@ class Toolbar(ctk.CTkFrame):
                 tool_frame = ctk.CTkFrame(self, fg_color="transparent")
                 tool_frame.pack(side="left", padx=2)
                 
-                # Load icon
-                image_path = f"assets_static/icons/{icon_file}"
-                pil_image = Image.open(image_path)
-                icon_image = ctk.CTkImage(
-                    light_image=pil_image,
-                    dark_image=pil_image,
-                    size=(icon_size, icon_size)
-                )
+                # Load icon using ASSETS_STATIC_PATH
+                icon_path = os.path.join(self.config.ASSETS_STATIC_PATH, "icons", icon_file)
+                if os.path.exists(icon_path):
+                    try:
+                        pil_image = Image.open(icon_path)
+                        icon_image = ctk.CTkImage(
+                            light_image=pil_image, 
+                            dark_image=pil_image,
+                            size=(icon_size, icon_size)
+                        )
+                    except Exception as e:
+                        logging.error(f"Failed to load icon {icon_file}: {str(e)}")
+                        icon_image = None
+                else:
+                    logging.error(f"Icon not found: {icon_path}")
+                    icon_image = None
                 
                 # Create button with icon and text
                 btn = ctk.CTkButton(
                     tool_frame,
                     text=label,
-                    image=icon_image,
+                    image=icon_image if icon_image else None,
                     width=button_width,
                     height=button_height,
                     fg_color=normal_color if self.tool_var.get() != tool_name else selected_color,
                     command=lambda t=tool_name: self._select_tool(t),
-                    compound="left",
+                    compound="left" if icon_image else None,
                 )
                 btn.pack()
                 
@@ -71,7 +82,7 @@ class Toolbar(ctk.CTkFrame):
                 }
                 
             except Exception as e:
-                print(f"Error loading tool icon {icon_file}: {e}")
+                logging.error(f"Error creating tool button {tool_name}: {str(e)}")
         
         # Add separator
         separator = ctk.CTkFrame(self, width=2, height=32)

@@ -11,9 +11,11 @@ from reportlab.lib.utils import ImageReader
 import math
 import shutil
 import tempfile
+from config import get_config
 
 class PDFExporter(ctk.CTkFrame):
     def __init__(self, parent, template_controller, csv_controller):
+        self.config = get_config()
         super().__init__(parent)
         self.template_controller = template_controller
         self.csv_controller = csv_controller
@@ -424,7 +426,7 @@ class PDFExporter(ctk.CTkFrame):
                 self._show_error("No CSV file configured in template")
                 return
             
-            csv_path = os.path.join("./assets_static/data", csv_file)
+            csv_path =  self.config.USER_DATA_DIR / "data" / csv_file
             if not os.path.exists(csv_path):
                 self._show_error(f"CSV file not found: {csv_file}")
                 return
