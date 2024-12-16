@@ -9,6 +9,7 @@ import tkinter.messagebox as messagebox
 from views.component_editor.canvas_manager import CanvasManager
 from views.component_editor.events.event_manager import EventManager
 from views.component_editor.element_manager import ElementManager
+from config import get_config
 
 class DataSourceDialog:
     def __init__(self, parent, template_data, on_save):
@@ -17,6 +18,7 @@ class DataSourceDialog:
         self.dialog.geometry("1000x800")
         self.template_data = template_data
         self.on_save = on_save
+        self.config = get_config()
         
         self._create_ui()
         
@@ -477,14 +479,14 @@ class DataSourceDialog:
             messagebox.showerror("Error", f"Failed to load CSV columns: {str(e)}")    
     def _get_csv_files(self):
         try:
-            data_dir = config.USER_DATA_DIR / "data"
+            data_dir = self.config.USER_DATA_DIR / "data"
             return [f for f in os.listdir(data_dir) if f.endswith('.csv')]
         except Exception:
             return []
     
     def _get_csv_columns(self, csv_file):
         try:
-            data_path = config.USER_DATA_DIR / "data" / csv_file
+            data_path = self.config.USER_DATA_DIR / "data" / csv_file
             df = pd.read_csv(data_path)
             return list(df.columns)
         except Exception:

@@ -76,7 +76,7 @@ class App(ctk.CTk):
             self.config = get_config()
             logger.info("Config loaded successfully")
             
-            self.title("Board Game Designer")
+            self.title("Board Game Creator")
             self.geometry("1024x768")
             
             # Load icon

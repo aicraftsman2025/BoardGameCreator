@@ -36,7 +36,7 @@ class ProjectSelectionView(ctk.CTkFrame):
             variable=self.project_var,
             values=["No projects available"],
             state="disabled",
-            width=200
+            width=220
         )
         self.project_dropdown.pack(pady=10)
         

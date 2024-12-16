@@ -5,7 +5,7 @@ import importlib.util
 import sys
 from config import get_config
 import logging
-
+from utils.path_utils import get_resource_path
 
 class ScriptApp:
     def __init__(self, title, description, script_path, icon_path=None):
@@ -73,19 +73,19 @@ class GenerativeTools(ctk.CTkFrame):
             ScriptApp(
                 title="Generate Map",
                 description="Generate a random board game map with different node types and connections.",
-                script_path="./utils/scripts/generate_map.py",
+                script_path=get_resource_path(os.path.join('utils', 'scripts', 'generate_map.py')),
                 icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "map.png")
             ),
             ScriptApp(
                 title="Generate Crossword",
                 description="Create crossword puzzles from word lists in CSV files.",
-                script_path="./utils/scripts/generate_crossword.py",
+                script_path=get_resource_path(os.path.join('utils', 'scripts', 'generate_map.py'))  ,
                 icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "crossword.png")
             ),
             ScriptApp(
                 title="Generate AI Assets",
                 description="Generate pixel art assets using AI from CSV prompts.",
-                script_path="./utils/scripts/generate_asset_ai.py",
+                script_path=get_resource_path(os.path.join('utils', 'scripts', 'generate_asset_ai.py')),
                 icon_path=os.path.join(self.config.ASSETS_STATIC_PATH, "icons", "ai_asset.png")
             ),
         ]

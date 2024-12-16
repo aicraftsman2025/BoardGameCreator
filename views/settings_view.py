@@ -114,7 +114,7 @@ class SettingsView(ctk.CTkFrame):
         # Copyright
         ctk.CTkLabel(
             about_frame,
-            text="© 2024 chatGPT & Claude AI and Thuc Huynh. All rights reserved.",
+            text="© 2024 ChatGPT & Claude AI and Thuc Huynh. All rights reserved.",
             font=("Helvetica", 10)
         ).pack(pady=20)
     

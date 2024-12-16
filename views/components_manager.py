@@ -250,12 +250,12 @@ class ComponentsManager(ctk.CTkFrame):
         )
         edit_btn.pack(pady=2)
         
-        export_btn = ctk.CTkButton(
-            actions_frame,
-            text="Export",
-            command=lambda: self._export_component(component)
-        )
-        export_btn.pack(pady=2)
+        # export_btn = ctk.CTkButton(
+        #     actions_frame,
+        #     text="Export",
+        #     command=lambda: self._export_component(component)
+        # )
+        # export_btn.pack(pady=2)
         
         template_btn = ctk.CTkButton(
             actions_frame,

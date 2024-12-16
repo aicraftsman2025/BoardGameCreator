@@ -390,6 +390,11 @@ class CanvasManager:
             physical_height = float(data.get('physical_height', 0))
             physical_unit = data.get('physical_unit', 'px')
             dpi = float(data.get('dpi', 96))
+
+            print(f"Physical width: {physical_width}")
+            print(f"Physical height: {physical_height}")
+            print(f"Physical unit: {physical_unit}")
+            print(f"DPI: {dpi}")
             
             # Convert physical dimensions to pixels
             if physical_unit == 'mm':
@@ -430,7 +435,7 @@ class CanvasManager:
                 
             print(f"Physical size: {physical_width}{physical_unit} x {physical_height}{physical_unit}")
             print(f"Actual pixels: {width_px}px x {height_px}px")
-            print(f"DPI: {dpi}")
+            print(f"Canvas size updated to: {self.canvas.winfo_width()}x{self.canvas.winfo_height()}")
             print(f"Canvas size updated to: {self.canvas.winfo_width()}x{self.canvas.winfo_height()}")
             
         except Exception as e:

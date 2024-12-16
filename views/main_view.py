@@ -88,10 +88,11 @@ class MainView(ctk.CTkFrame):
         # App Title
         title_label = ctk.CTkLabel(
             self.sidebar,
-            text="Board Game Creator",
-            font=("Helvetica", 16, "bold")
+            text="Creation Tools",
+            font=("Helvetica", 16, "bold"),
+            anchor="w"  # Left align text
         )
-        title_label.grid(row=0, column=0, padx=20, pady=(20, 30))
+        title_label.grid(row=0, column=0, padx=(0, 0), pady=(10, 10))
         
         # Navigation Buttons
         self.nav_buttons = {}
@@ -100,7 +101,7 @@ class MainView(ctk.CTkFrame):
         button_configs = [
             {
                 "key": "project",
-                "text": f"Project: {self.current_project or 'Select Project'}",
+                "text": 'Select Project',
                 "row": 1,
                 "icon": "project"
             },
@@ -268,7 +269,7 @@ class MainView(ctk.CTkFrame):
     
     def on_project_selected(self, project_name):
         """Handle project selection and switch to component editor"""
-        self.update_project_button(project_name)
+        #self.update_project_button(project_name)
         self.current_project = project_name
         # Ensure we switch to component editor after project selection
         self.show_view("component")

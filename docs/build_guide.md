@@ -26,3 +26,12 @@
 # Development Guide
 
 ## Project Structure
+
+Build the app for MaCOS
+rm -rf build dist
+
+# Build with clean environment
+pyinstaller --clean BoardGameCreator.spec
+
+# Optional: Sign the app (recommended)
+codesign --force --deep --sign - dist/BoardGameCreator.app
