@@ -32,7 +32,7 @@ class Toolbar(ctk.CTkFrame):
         ]
         
         # Tool button styles
-        button_width = 100
+        button_width = 60
         button_height = 32
         icon_size = 24
         normal_color = "transparent"
@@ -92,7 +92,7 @@ class Toolbar(ctk.CTkFrame):
         self.undo_button = ctk.CTkButton(
             self,
             text="Undo",
-            width=60,
+            width=40,
             state="disabled",
             command=lambda: self.event_manager.emit(EventType.UNDO, None)
         )
@@ -101,7 +101,7 @@ class Toolbar(ctk.CTkFrame):
         self.redo_button = ctk.CTkButton(
             self,
             text="Redo",
-            width=60,
+            width=40,
             state="disabled",
             command=lambda: self.event_manager.emit(EventType.REDO, None)
         )

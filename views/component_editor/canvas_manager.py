@@ -919,17 +919,13 @@ class CanvasManager:
             
             # Open appropriate dialog based on element type
             if element['type'] == 'text':
-                from views.dialogs.text_dialog import TextDialog
-                dialog = TextDialog(self.canvas, element, on_save)
+                self.element_manager.edit_text_element(element)
             elif element['type'] == 'shape':
-                from views.dialogs.shape_dialog import ShapeDialog
-                dialog = ShapeDialog(self.canvas, element, on_save)
+                self.element_manager.edit_shape_element(element)
             elif element['type'] == 'image':
-                from views.dialogs.image_dialog import ImageDialog
-                dialog = ImageDialog(self.canvas, element, on_save)
+                self.element_manager.edit_image_element(element)
             elif element['type'] == 'qrcode':
-                from views.dialogs.qrcode_dialog import QRCodeDialog
-                dialog = QRCodeDialog(self.canvas, element, on_save)
+                self.element_manager.edit_qrcode_element(element)
             
             # Select the element
             self.selected_element = element

@@ -668,9 +668,9 @@ class ComponentEditor(ctk.CTkFrame):
             self.current_component = component
             
             # Check for dimensions in nested structure
-            if 'dimensions' in properties:
-                width = properties['dimensions'].get('width', width)
-                height = properties['dimensions'].get('height', height)
+            # if 'dimensions' in properties:
+            #     width = properties['dimensions'].get('width', width)
+            #     height = properties['dimensions'].get('height', height)
             
             # Set canvas properties
             #self.canvas_manager.resize_canvas(width, height)
