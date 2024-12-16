@@ -1,2 +1,36 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Python files
+*.py linguist-language=Python
+*.pyw linguist-language=Python
+requirements.txt linguist-language=Python
+
+# Documentation
+*.md linguist-documentation
+*.txt linguist-documentation
+docs/* linguist-documentation
+
+# Exclude vendor directories
+vendor/* linguist-vendored
+venv/* linguist-vendored
+env/* linguist-vendored
+.env/* linguist-vendored
+
+# Binary files (no line-ending conversion)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.db binary
+
+# Custom file associations
+*.spec linguist-language=Python
+*.pyi linguist-language=Python
+Pipfile linguist-language=Python
+Pipfile.lock linguist-language=Python
+pyproject.toml linguist-language=Python
+
+# Explicitly mark Python files as diffable
+*.py diff=python
+*.pyw diff=python
