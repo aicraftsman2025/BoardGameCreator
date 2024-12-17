@@ -440,6 +440,8 @@ class ComponentEditor(ctk.CTkFrame):
                                 'height': height_px,
                                 'original_width': data['dimensions']['width'],
                                 'original_height': data['dimensions']['height'],
+                                'actual_width': width_px,
+                                'actual_height': height_px,
                                 'unit': data['unit']
                             }
                         }

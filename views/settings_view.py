@@ -104,12 +104,12 @@ class SettingsView(ctk.CTkFrame):
         ).pack(pady=20)
         
         # GitHub Link
-        github_button = ctk.CTkButton(
-            about_frame,
-            text="View on GitHub",
-            command=lambda: webbrowser.open("https://github.com/haruthuc/boardgamedesigner")
-        )
-        github_button.pack(pady=10)
+        # github_button = ctk.CTkButton(
+        #     about_frame,
+        #     text="View on GitHub",
+        #     command=lambda: webbrowser.open("https://github.com/haruthuc/boardgamedesigner")
+        # )
+        # github_button.pack(pady=10)
         
         # Copyright
         ctk.CTkLabel(
@@ -153,6 +153,6 @@ class SettingsView(ctk.CTkFrame):
         }
         
         success = self.controller.save_settings(settings)
-        if success:
+        #if success:
             # Update asset controller path
-            self.controller.update_asset_path(settings['paths']['assets'])
+            #self.controller.update_asset_path(settings['paths']['assets'])

@@ -104,7 +104,7 @@ class ProjectSelectionView(ctk.CTkFrame):
             print(f"Error loading projects: {str(e)}")
             self.show_message("Error", f"Failed to load projects: {str(e)}")
     
-    def center_dialog(self, dialog, width=400, height=200):
+    def center_dialog(self, dialog, width=400, height=220):
         """Center a dialog on the screen with given dimensions"""
         dialog.geometry(f"{width}x{height}")
         dialog.update_idletasks()  # Update "requested size" from geometry manager
@@ -243,7 +243,7 @@ class ProjectSelectionView(ctk.CTkFrame):
         """Delete project with confirmation"""
         dialog = ctk.CTkToplevel(self)
         dialog.title("Delete Project")
-        self.center_dialog(dialog, width=400, height=200)
+        self.center_dialog(dialog, width=400, height=220)
         
         # Warning message
         warning_frame = ctk.CTkFrame(dialog)

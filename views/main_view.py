@@ -101,7 +101,7 @@ class MainView(ctk.CTkFrame):
         button_configs = [
             {
                 "key": "project",
-                "text": 'Select Project',
+                "text": f"Project - {self.current_project}",
                 "row": 1,
                 "icon": "project"
             },
@@ -269,7 +269,7 @@ class MainView(ctk.CTkFrame):
     
     def on_project_selected(self, project_name):
         """Handle project selection and switch to component editor"""
-        #self.update_project_button(project_name)
+        self.update_project_button(project_name)
         self.current_project = project_name
         # Ensure we switch to component editor after project selection
         self.show_view("component")
@@ -277,4 +277,4 @@ class MainView(ctk.CTkFrame):
     def update_project_button(self, project_name):
         """Update the projects button text with the selected project name"""
         self.current_project = project_name
-        self.nav_buttons["project"].configure(text=f"Projects - {project_name}")
+        self.nav_buttons["project"].configure(text=f"Project - {project_name}")
