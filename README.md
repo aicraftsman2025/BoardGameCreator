@@ -2,17 +2,17 @@
 
 A professional desktop application for designing and creating board game components with AI-powered asset generation and print-ready export capabilities.
 
-![Board Game Creator](/screenshots/screenshot01.png)
+![Board Game Creator](/screenshots/screen01.png)
 
-![Board Game Creator](/screenshots/screenshot02.png)
+![Board Game Creator](/screenshots/screen02.png)
 
-![Design Component](/screenshots/screenshot03.png)
+![Design Component](/screenshots/screen03.png)
 
-![Generate PDF](/screenshots/screenshot04.png)  
+![Generate PDF](/screenshots/screen04.png)  
 
-![Export PDF - Ready to Print](/screenshots/screenshot05.png)  
+![Export PDF - Ready to Print](/screenshots/screen05.png)  
 
-![Assets](/screenshots/screenshot06.png)  
+![Assets](/screenshots/screen06.png)  
   
 
 ## 🎮 Features
