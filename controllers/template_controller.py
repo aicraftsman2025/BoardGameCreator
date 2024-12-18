@@ -266,6 +266,7 @@ class TemplateController:
                             for key in rendered_canvas.itemconfig(item)}
                     
                     # Create same item on internal canvas based on type
+                    print("=== item_type", item_type)
                     try:
                         if item_type == "line":
                             if len(coords) >= 4:  # Ensure we have enough coordinates

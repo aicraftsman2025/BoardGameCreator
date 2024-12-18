@@ -749,6 +749,7 @@ class CanvasManager:
                 width = properties.get('width', 200)
                 height = properties.get('height', 200)
                 content = properties.get('content', '')
+                print("=== content", content)
                 
                 # Generate QR code
                 qr = qrcode.QRCode(
@@ -775,7 +776,7 @@ class CanvasManager:
                 self.next_image_ref_id += 1
                 
                 # Create canvas image
-                item_id = target_canvas.create_image(
+                canvas_id = target_canvas.create_image(
                     x + width/2,  # Center the image
                     y + height/2,
                     image=photo_image,
@@ -783,11 +784,11 @@ class CanvasManager:
                 )
                 
                 # Store element reference
-                self.element_ids[item_id] = element
+                # self.element_ids[item_id] = element
                 
-                # Add selection handles if selected
-                if element == self.selected_element:
-                    self.show_selection(element)
+                # # Add selection handles if selected
+                # if element == self.selected_element:
+                #     self.show_selection(element)
                     
             except Exception as e:
                 print(f"Error rendering QR code: {e}")

@@ -423,14 +423,17 @@ class CardFactory(ctk.CTkFrame):
             self.progress_label.configure(text="Ready")
             self.update()
     
-    def _apply_mappings(self, card_data: Dict, row: pd.Series):
+    def _apply_mappings(self, card_data: dict, row: pd.Series):
         """Apply data mappings to card data"""
         try:
             mappings = card_data.get('data_source', {}).get('mappings', {})
             available_columns = row.index.tolist()
             
             for element_id, mapping in mappings.items():
-                if mapping['type'] == 'direct':
+                mapping_type = mapping['type']
+                
+                if mapping_type == 'direct':
+                    # Handle direct mapping (existing code)
                     column = mapping['column']
                     if column not in available_columns:
                         print(f"Warning: Column '{column}' not found in data")
@@ -443,9 +446,70 @@ class CardFactory(ctk.CTkFrame):
                     for element in card_data['elements']:
                         if element['id'] == element_id and element['type'] == 'text':
                             element['properties']['text'] = value
+                        elif element['id'] == element_id and element['type'] == 'qrcode':
+                            element['properties']['content'] = value
                             break
                 
-                elif mapping['type'] == 'macro':
+                elif mapping_type == 'conditional':
+                    # Handle conditional mapping
+                    conditions = mapping.get('conditions', [])
+                    matched_value = None
+                    
+                    for condition in conditions:
+                        column = condition['column']
+                        operator = condition['operator']
+                        test_value = condition['value']
+                        result = condition['result']
+                        
+                        print(column, operator, test_value, result)
+
+                        if column not in available_columns:
+                            continue
+                        
+                        cell_value = str(row[column]) if pd.notna(row[column]) else ""
+                        
+                        # Evaluate condition based on operator
+                        condition_met = False
+                        try:
+                            if operator == 'equals':
+                                condition_met = cell_value == test_value
+                            elif operator == 'not equals':
+                                condition_met = cell_value != test_value
+                            elif operator == 'contains':
+                                condition_met = test_value.lower() in cell_value.lower()
+                            elif operator == 'greater than':
+                                condition_met = float(cell_value) > float(test_value)
+                            elif operator == 'less than':
+                                condition_met = float(cell_value) < float(test_value)
+                        except (ValueError, TypeError):
+                            print(f"Warning: Could not evaluate condition for column '{column}'")
+                            continue
+                        
+                        if condition_met:
+                            # Handle both direct value and macro expressions
+                            if '${' in result:
+                                # Handle macro expression
+                                matched_value = result
+                                for col in available_columns:
+                                    col_value = str(row[col]) if pd.notna(row[col]) else ""
+                                    matched_value = matched_value.replace(f"${{{col}}}", col_value)
+                            else:
+                                # Handle direct value
+                                matched_value = result
+                            break
+                    
+                    # Apply matched value if found
+                    if matched_value is not None:
+                        for element in card_data['elements']:
+                            if element['id'] == element_id:
+                                if element['type'] == 'text':
+                                    element['properties']['text'] = matched_value
+                                elif element['type'] == 'image':
+                                    element['properties']['path'] = matched_value
+                                break
+                
+                elif mapping_type == 'macro':
+                    # Handle macro mapping (existing code)
                     expression = mapping['expression']
                     for column in available_columns:
                         col_value = str(row[column]) if pd.notna(row[column]) else ""
@@ -458,6 +522,8 @@ class CardFactory(ctk.CTkFrame):
         
         except Exception as e:
             print(f"Error applying mappings: {e}")
+            import traceback
+            traceback.print_exc()
     
     def _validate_export(self) -> bool:
         """Validate export configuration"""
