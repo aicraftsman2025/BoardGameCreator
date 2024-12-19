@@ -223,6 +223,23 @@ class TemplateController:
             actual_width = template_data['dimensions'].get('actual_width', template_data['dimensions']['width'])
             actual_height = template_data['dimensions'].get('actual_height', template_data['dimensions']['height'])
             background_color = template_data.get('background_color', 'white')
+            
+            # Position dialog in center of screen
+            screen_width = dialog.winfo_screenwidth()
+            screen_height = dialog.winfo_screenheight()
+            x = (screen_width - actual_width) // 2
+            y = (screen_height - actual_height) // 2
+            dialog.geometry(f"{actual_width}x{actual_height}+{x}+{y}")
+            
+            # Prevent dialog from being resized or moved
+            dialog.resizable(False, False)
+            dialog.overrideredirect(True)  # Remove window decorations
+            
+            # Keep dialog on top of other windows
+            dialog.attributes('-topmost', True)
+            dialog.lift()
+            dialog.focus_force()
+            
             # Create a frame with fixed dimensions
             render_frame = ctk.CTkFrame(dialog, width=actual_width, height=actual_height)
             render_frame.pack_propagate(False)  # Prevent frame from shrinking
@@ -248,9 +265,9 @@ class TemplateController:
             canvas.configure(width=actual_width, height=actual_height)
             canvas.pack(expand=False, fill=None)  # Don't allow canvas to resize
             
-            # Force dialog update and geometry
+            # Force dialog update and ensure it stays on top
             dialog.update_idletasks()
-            dialog.geometry(f"{actual_width}x{actual_height}")
+            dialog.lift()
             
             try:
                 # Render elements at actual size and get rendered canvas
@@ -289,6 +306,7 @@ class TemplateController:
                     internal_canvas.update_idletasks()
                     dialog.update_idletasks()
                     dialog.update()
+                    dialog.lift()  # Keep ensuring dialog stays on top
                 
                 # Additional wait for rendering
                 dialog.after(1000)
