@@ -393,9 +393,56 @@ class AssetManager(ctk.CTkFrame):
                 self.show_message("Success", f"Successfully imported {imported_count} assets.")
     
     def filter_assets(self):
-        # Filter assets based on search text
-        pass 
-
+        """Filter assets based on search text"""
+        search_text = self.search_var.get()
+        
+        # Reset to first page when searching
+        self.current_page = 1
+        
+        # Clear existing assets
+        for widget in self.grid_frame.winfo_children():
+            widget.destroy()
+        
+        # Get filtered assets count
+        self.total_assets = self.controller.get_assets_count(
+            folder_name=self.current_folder,
+            search_text=search_text if search_text else None
+        )
+        
+        # Get filtered assets with pagination
+        offset = (self.current_page - 1) * self.items_per_page
+        assets = self.controller.get_assets_page(
+            offset=offset,
+            limit=self.items_per_page,
+            folder_name=self.current_folder,
+            search_text=search_text if search_text else None
+        )
+        
+        if not assets:
+            label = ctk.CTkLabel(
+                self.grid_frame,
+                text="No matching assets found",
+                font=("Arial", 14)
+            )
+            label.pack(pady=20)
+            return
+        
+        # Fixed number of columns
+        num_columns = 3
+        
+        # Create asset thumbnails
+        for i, asset in enumerate(assets):
+            row = i // num_columns
+            col = i % num_columns
+            self.create_asset_thumbnail(asset, row, col)
+        
+        # Update pagination
+        total_pages = max(1, (self.total_assets + self.items_per_page - 1) // self.items_per_page)
+        
+        self.page_label.configure(text=f"Page {self.current_page} of {total_pages}")
+        self.prev_btn.configure(state="normal" if self.current_page > 1 else "disabled")
+        self.next_btn.configure(state="normal" if self.current_page < total_pages else "disabled")
+    
     def delete_folder(self, folder_name: str):
         """Delete a folder after confirmation"""
         dialog = ctk.CTkInputDialog(

@@ -161,24 +161,34 @@ class AssetController:
         folder_path = os.path.join(self.asset_dir, folder_name)
         return folder_path if os.path.isdir(folder_path) else None
     
-    def get_assets_count(self, folder_name: Optional[str] = None) -> int:
+    def get_assets_count(self, folder_name: Optional[str] = None, search_text: Optional[str] = None) -> int:
         """
-        Get total count of assets, optionally filtered by folder
+        Get total count of assets, optionally filtered by folder and search text
         
         Args:
             folder_name: Optional folder name to filter assets
+            search_text: Optional search text to filter assets by name
         
         Returns:
             int: Total number of assets
         """
+        query_parts = []
+        params = []
+        
         if folder_name:
             folder_path = os.path.join(self.asset_dir, folder_name)
-            query = "SELECT COUNT(*) as count FROM assets WHERE file_path LIKE ?"
-            cursor = self.db.execute(query, (f"{folder_path}%",))
-        else:
-            query = "SELECT COUNT(*) as count FROM assets"
-            cursor = self.db.execute(query)
+            query_parts.append("file_path LIKE ?")
+            params.append(f"{folder_path}%")
         
+        if search_text:
+            query_parts.append("name LIKE ?")
+            params.append(f"%{search_text}%")
+        
+        query = "SELECT COUNT(*) as count FROM assets"
+        if query_parts:
+            query += " WHERE " + " AND ".join(query_parts)
+        
+        cursor = self.db.execute(query, params)
         result = cursor.fetchone()
         return result['count'] if result else 0
     
@@ -265,33 +275,39 @@ class AssetController:
         self.asset_dir = new_path
         self.db.commit()
     
-    def get_assets_page(self, offset: int = 0, limit: int = 12, folder_name: Optional[str] = None) -> list:
+    def get_assets_page(self, offset: int = 0, limit: int = 12, 
+                       folder_name: Optional[str] = None, 
+                       search_text: Optional[str] = None) -> list:
         """
-        Get paginated assets, optionally filtered by folder
+        Get paginated assets, optionally filtered by folder and search text
         
         Args:
             offset: Number of records to skip
             limit: Maximum number of records to return
             folder_name: Optional folder name to filter assets
+            search_text: Optional search text to filter assets by name
         
         Returns:
             list: List of Asset objects for the current page
         """
+        query_parts = []
+        params = []
+        
         if folder_name:
             folder_path = os.path.join(self.asset_dir, folder_name)
-            query = """
-                SELECT * FROM assets 
-                WHERE file_path LIKE ? 
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
-            """
-            cursor = self.db.execute(query, (f"{folder_path}%", limit, offset))
-        else:
-            query = """
-                SELECT * FROM assets 
-                ORDER BY created_at DESC
-                LIMIT ? OFFSET ?
-            """
-            cursor = self.db.execute(query, (limit, offset))
+            query_parts.append("file_path LIKE ?")
+            params.append(f"{folder_path}%")
         
+        if search_text:
+            query_parts.append("name LIKE ?")
+            params.append(f"%{search_text}%")
+        
+        query = "SELECT * FROM assets"
+        if query_parts:
+            query += " WHERE " + " AND ".join(query_parts)
+        
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        
+        cursor = self.db.execute(query, params)
         return [Asset.from_db_row(row) for row in cursor.fetchall()]
