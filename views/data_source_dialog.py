@@ -567,7 +567,8 @@ class DataSourceDialog:
             
             # Set canvas properties from template
             properties = self.template_data.get('properties', {})
-            self.temp_canvas_manager.background_color = properties.get('background_color', '#FFFFFF')
+            print("update_preview properties", properties)
+            self.temp_canvas_manager.background_color=self.template_data.get('background_color', '#FFFFFF')
             
             # Get rendered canvas from temp canvas manager
             rendered_canvas = self.temp_canvas_manager.render_elements_ondemand(elements)

@@ -1546,7 +1546,7 @@ class CanvasManager:
                             bounds['x'] + bounds['width']/2,  # Center horizontally
                             bounds['y'] + bounds['height'] + 10,  # Center vertically
                             text=f"ID: {element_id}",
-                            fill="red",
+                            fill="#00FF9C",
                             anchor="center",
                             tags=f"id_label_{element_id}"
                         )

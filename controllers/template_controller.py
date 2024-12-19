@@ -176,6 +176,7 @@ class TemplateController:
             # Extract template data from component
             template_data = {
                 'type': component.type,
+                'background_color': component.properties.get('background_color', 'white'),
                 'dimensions': {
                     'width': component.properties.get('width', 800),
                     'height': component.properties.get('height', 600),
@@ -221,7 +222,7 @@ class TemplateController:
             # Get actual dimensions
             actual_width = template_data['dimensions'].get('actual_width', template_data['dimensions']['width'])
             actual_height = template_data['dimensions'].get('actual_height', template_data['dimensions']['height'])
-            
+            background_color = template_data.get('background_color', 'white')
             # Create a frame with fixed dimensions
             render_frame = ctk.CTkFrame(dialog, width=actual_width, height=actual_height)
             render_frame.pack_propagate(False)  # Prevent frame from shrinking
@@ -232,7 +233,8 @@ class TemplateController:
                 render_frame,
                 width=actual_width,
                 height=actual_height,
-                highlightthickness=0
+                highlightthickness=0,
+                background=background_color
             )
             internal_canvas.pack(expand=False, fill=None)
             
