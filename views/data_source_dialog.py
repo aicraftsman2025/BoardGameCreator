@@ -20,7 +20,11 @@ class DataSourceDialog:
         self.on_save = on_save
         self.config = get_config()
         
+        # Load existing data source if available
+        self.data_source = template_data.get('data_source', {})
+        
         self._create_ui()
+        self._load_existing_mappings()
         
     def _create_ui(self):
         """Create main UI layout"""
@@ -468,15 +472,37 @@ class DataSourceDialog:
         try:
             # Update column options in mapping dropdowns
             columns = self._get_csv_columns(csv_file)
-            for var in self.mapping_vars.values():
-                menu = var._optionmenu_callback._menu
-                menu.configure(values=["None"] + columns)
-                if var.get() not in ["None"] + columns:
-                    var.set("None")
+            
+            # Update all mapping dropdowns
+            for element_id, mapping_data in self.mapping_vars.items():
+                # Update direct mapping column dropdown
+                direct_frame = mapping_data['frames']['direct']
+                if hasattr(direct_frame, 'column_var'):
+                    current_value = direct_frame.column_var.get()
+                    menu = next((widget for widget in direct_frame.winfo_children() 
+                               if isinstance(widget, ctk.CTkOptionMenu)), None)
+                    if menu:
+                        menu.configure(values=["None"] + columns)
+                        if current_value not in ["None"] + columns:
+                            direct_frame.column_var.set("None")
+                
+                # Update conditional mapping column dropdowns
+                for condition_vars in mapping_data['conditions']:
+                    current_value = condition_vars['column'].get()
+                    menu = next((widget for widget in condition_vars['frame'].winfo_children() 
+                               if isinstance(widget, ctk.CTkOptionMenu) and 
+                               widget.cget('variable') == condition_vars['column']), None)
+                    if menu:
+                        menu.configure(values=columns)
+                        if current_value not in columns:
+                            condition_vars['column'].set(columns[0] if columns else "Column...")
                     
         except Exception as e:
             print(f"Error updating CSV columns: {e}")
-            messagebox.showerror("Error", f"Failed to load CSV columns: {str(e)}")    
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("Error", f"Failed to load CSV columns: {str(e)}")
+    
     def _get_csv_files(self):
         try:
             data_dir = self.config.USER_DATA_DIR / "data"
@@ -635,4 +661,56 @@ Notes:
             height=32,
             font=("Arial", 12)
         ).pack(side="right", padx=5)
+    
+    def _load_existing_mappings(self):
+        """Load existing data source mappings into UI"""
+        try:
+            if not self.data_source:
+                return
+            
+            # Set CSV file if exists
+            csv_file = self.data_source.get('file')
+            if csv_file and csv_file in self.csv_files:
+                self.csv_var.set(csv_file)
+                self._on_csv_selected(csv_file)
+            
+            # Load mappings
+            mappings = self.data_source.get('mappings', {})
+            for element_id, mapping in mappings.items():
+                if element_id not in self.mapping_vars:
+                    continue
+                
+                mapping_type = mapping['type']
+                mapping_data = self.mapping_vars[element_id]
+                
+                # Set mapping type
+                mapping_data['type'].set(mapping_type)
+                self._show_mapping_type(mapping_type, element_id)
+                
+                if mapping_type == 'direct':
+                    # Set column for direct mapping
+                    mapping_data['column'].set(mapping.get('column', 'None'))
+                    
+                elif mapping_type == 'conditional':
+                    # Load conditions
+                    conditions = mapping.get('conditions', [])
+                    for condition in conditions:
+                        self._add_condition(element_id)
+                        # Get the last added condition
+                        condition_vars = mapping_data['conditions'][-1]
+                        
+                        # Set condition values
+                        condition_vars['column'].set(condition.get('column', ''))
+                        condition_vars['operator'].set(condition.get('operator', 'equals'))
+                        condition_vars['value'].set(condition.get('value', ''))
+                        condition_vars['result'].set(condition.get('result', ''))
+                        
+                elif mapping_type == 'macro':
+                    # Set macro expression
+                    mapping_data['macro'].set(mapping.get('expression', ''))
+        
+        except Exception as e:
+            print(f"Error loading existing mappings: {e}")
+            import traceback
+            traceback.print_exc()
     
