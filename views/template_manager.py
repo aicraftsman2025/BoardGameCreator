@@ -21,15 +21,7 @@ class TemplateManager(ctk.CTkFrame):
         self.toolbar = ctk.CTkFrame(self)
         self.toolbar.pack(fill="x", padx=5, pady=5)
         
-        # Create Template Button (Updated command)
-        self.create_btn = ctk.CTkButton(
-            self.toolbar,
-            text="Create Template",
-            command=self.show_create_template_dialog  # Changed from create_template_item
-        )
-        self.create_btn.pack(side="left", padx=5)
-        
-        # Search Entry
+        # Search Entry (now the only item in toolbar)
         self.search_var = ctk.StringVar()
         self.search_var.trace_add("write", lambda *args: self.filter_templates())
         self.search_entry = ctk.CTkEntry(
