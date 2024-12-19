@@ -461,8 +461,6 @@ class CardFactory(ctk.CTkFrame):
                         test_value = condition['value']
                         result = condition['result']
                         
-                        print(column, operator, test_value, result)
-
                         if column not in available_columns:
                             continue
                         
@@ -487,9 +485,11 @@ class CardFactory(ctk.CTkFrame):
                         
                         if condition_met:
                             # Handle both direct value and macro expressions
+                            result = result.replace("${ASSETS}", str(self.config.ASSETS_PATH))
                             if '${' in result:
                                 # Handle macro expression
                                 matched_value = result
+                                # Then handle data column macros
                                 for col in available_columns:
                                     col_value = str(row[col]) if pd.notna(row[col]) else ""
                                     matched_value = matched_value.replace(f"${{{col}}}", col_value)
@@ -509,11 +509,17 @@ class CardFactory(ctk.CTkFrame):
                                 break
                 
                 elif mapping_type == 'macro':
-                    # Handle macro mapping (existing code)
+                    # Handle macro mapping
                     expression = mapping['expression']
+                    # Convert PosixPath to string when replacing ${ASSETS}
+                    expression = expression.replace("${ASSETS}", str(self.config.ASSETS_PATH))
+                    print("expression", expression)
+                    # Then handle data column macros
                     for column in available_columns:
                         col_value = str(row[column]) if pd.notna(row[column]) else ""
                         expression = expression.replace(f"${{{column}}}", col_value)
+                        
+                    print("expression final", expression)
                     
                     for element in card_data['elements']:
                         if element['id'] == element_id and element['type'] == 'image':
