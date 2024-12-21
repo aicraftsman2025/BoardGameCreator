@@ -78,6 +78,31 @@ class PDFExporter(ctk.CTkFrame):
                 value=size
             ).pack(side="left", padx=10)
         
+        # Add direction selection after page size selection
+        direction_frame = ctk.CTkFrame(top_frame)
+        direction_frame.pack(fill="x", padx=5, pady=5)
+        
+        ctk.CTkLabel(
+            direction_frame,
+            text="Layout Direction:",
+            font=("Arial", 12, "bold")
+        ).pack(side="left", padx=5)
+        
+        self.direction_var = ctk.StringVar(value="ltr")
+        ctk.CTkRadioButton(
+            direction_frame,
+            text="Left to Right",
+            variable=self.direction_var,
+            value="ltr"
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkRadioButton(
+            direction_frame,
+            text="Right to Left",
+            variable=self.direction_var,
+            value="rtl"
+        ).pack(side="left", padx=10)
+        
         # Export Path Selection
         path_frame = ctk.CTkFrame(top_frame)
         path_frame.pack(fill="x", padx=5, pady=5)
@@ -508,7 +533,11 @@ class PDFExporter(ctk.CTkFrame):
                         row_num = (cards_on_current_page // layout['cards_per_row'])
                         col_num = (cards_on_current_page % layout['cards_per_row'])
                         
-                        # Calculate x and y positions in points (72 points = 1 inch)
+                        # Adjust column number for RTL layout
+                        if self.direction_var.get() == "rtl":
+                            col_num = layout['cards_per_row'] - 1 - col_num
+                        
+                        # Calculate x and y positions in points
                         x = (layout['margin'] + col_num * (layout['card_width'] + layout['h_spacing'])) * 72 / 25.4
                         y = (page_height_mm - (layout['margin'] + (row_num + 1) * layout['card_height'] + row_num * layout['v_spacing'])) * 72 / 25.4
                         
