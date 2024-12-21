@@ -11,6 +11,7 @@ from reportlab.lib.utils import ImageReader
 import math
 import shutil
 import tempfile
+import traceback
 from config import get_config
 
 class PDFExporter(ctk.CTkFrame):
@@ -431,37 +432,39 @@ class PDFExporter(ctk.CTkFrame):
             card_width_mm = dimensions.get('actual_width', dimensions.get('width', 63))
             card_height_mm = dimensions.get('actual_height', dimensions.get('height', 88))
             
-            print("unit", unit)
-            print("dpi", dpi)
-            # Convert to mm if needed
-            if unit == 'px':
+            # Convert dimensions to mm
+            if unit == 'px' or unit == 'mm':  # Both need same conversion since actual size is in pixels
                 card_width_mm = (card_width_mm / dpi) * 25.4
                 card_height_mm = (card_height_mm / dpi) * 25.4
             elif unit == 'in':
                 card_width_mm = card_width_mm * 25.4
                 card_height_mm = card_height_mm * 25.4
-            elif unit == 'mm':
-                # Convert from pixels to mm since actual size is always in pixels
-                card_width_mm = (card_width_mm / dpi) * 25.4
-                card_height_mm = (card_height_mm / dpi) * 25.4
             
-            # Load CSV data
+            # Load and validate CSV data
             csv_file = template_data.get('data_source', {}).get('file')
             if not csv_file:
                 self._show_error("No CSV file configured in template")
                 return
             
-            csv_path =  self.config.USER_DATA_DIR / "data" / csv_file
+            csv_path = self.config.USER_DATA_DIR / "data" / csv_file
             if not os.path.exists(csv_path):
                 self._show_error(f"CSV file not found: {csv_file}")
                 return
             
-            df = pd.read_csv(csv_path)
+            try:
+                df = pd.read_csv(csv_path)
+            except Exception as e:
+                self._show_error(f"Failed to read CSV file: {str(e)}")
+                return
             
             # Apply row range filter
-            start_row = int(self.start_row_var.get()) - 1
-            end_row = int(self.end_row_var.get()) if self.end_row_var.get() else len(df)
-            df = df.iloc[start_row:end_row]
+            try:
+                start_row = max(0, int(self.start_row_var.get()) - 1)
+                end_row = int(self.end_row_var.get()) if self.end_row_var.get() else len(df)
+                df = df.iloc[start_row:end_row]
+            except ValueError as e:
+                self._show_error(f"Invalid row numbers: {str(e)}")
+                return
             
             if df.empty:
                 self._show_error("No records match the filter criteria")
@@ -470,28 +473,6 @@ class PDFExporter(ctk.CTkFrame):
             # Get page size and calculate layout
             page_size = self.page_sizes[self.size_var.get()]
             layout = self._calculate_layout(card_width_mm, card_height_mm, page_size)
-            
-            # Debug print
-            print(f"Layout calculation results:")
-            print(f"Page size: {page_size}")
-            print(f"Card size: {card_width_mm}mm x {card_height_mm}mm")
-            print(f"Cards per row: {layout['cards_per_row']}")
-            print(f"Cards per column: {layout['cards_per_column']}")
-            print(f"Cards per page: {layout['cards_per_page']}")
-            print(f"Horizontal spacing: {layout['h_spacing']}mm")
-            print(f"Vertical spacing: {layout['v_spacing']}mm")
-            
-            # Calculate page margins and spacing
-            page_width_mm = page_size[0] * 25.4 / 72  # Convert points to mm
-            page_height_mm = page_size[1] * 25.4 / 72
-            
-            # Use layout values for margins and spacing
-            margin_h = layout['margin']  # Use margin from layout calculation
-            margin_v = layout['margin']
-            
-            # Use pre-calculated spacing from layout
-            h_spacing = layout['h_spacing']
-            v_spacing = layout['v_spacing']
             
             # Create temporary directory for card images
             temp_dir = tempfile.mkdtemp()
@@ -506,8 +487,15 @@ class PDFExporter(ctk.CTkFrame):
                 cards_per_page = layout['cards_per_page']
                 total_pages = math.ceil(total_cards / cards_per_page)
                 current_page = 1
+                successful_cards = 0
                 
                 for index, row in df.iterrows():
+                    # Check if we need a new page before processing the next card
+                    if cards_on_current_page >= cards_per_page:
+                        c.showPage()
+                        current_page += 1
+                        cards_on_current_page = 0
+                    
                     # Update progress
                     progress = (index - start_row + 1) / total_cards
                     self.progress_bar.set(progress)
@@ -537,9 +525,9 @@ class PDFExporter(ctk.CTkFrame):
                         if self.direction_var.get() == "rtl":
                             col_num = layout['cards_per_row'] - 1 - col_num
                         
-                        # Calculate x and y positions in points
+                        # Calculate x and y positions in points (72 points per inch)
                         x = (layout['margin'] + col_num * (layout['card_width'] + layout['h_spacing'])) * 72 / 25.4
-                        y = (page_height_mm - (layout['margin'] + (row_num + 1) * layout['card_height'] + row_num * layout['v_spacing'])) * 72 / 25.4
+                        y = (page_size[1] * 25.4 / 72 - (layout['margin'] + (row_num + 1) * layout['card_height'] + row_num * layout['v_spacing'])) * 72 / 25.4
                         
                         # Add image to PDF
                         try:
@@ -553,12 +541,7 @@ class PDFExporter(ctk.CTkFrame):
                             )
                             
                             cards_on_current_page += 1
-                            
-                            # Start new page if current page is full
-                            if cards_on_current_page >= cards_per_page and index < len(df) - 1:
-                                c.showPage()
-                                current_page += 1
-                                cards_on_current_page = 0
+                            successful_cards += 1
                             
                         except Exception as e:
                             print(f"Error adding image to PDF: {e}")
@@ -571,17 +554,17 @@ class PDFExporter(ctk.CTkFrame):
                 # Save the final PDF
                 if cards_on_current_page > 0:
                     c.showPage()
-                
                 c.save()
+                
                 self.progress_bar.set(1)
                 self.progress_label.configure(text="Export completed!")
                 
-                if cards_on_current_page > 0:
+                if successful_cards > 0:
                     tk.messagebox.showinfo(
                         "Success",
                         f"PDF exported successfully!\n"
                         f"Total pages: {total_pages}\n"
-                        f"Total cards: {total_cards}"
+                        f"Total cards: {successful_cards}"
                     )
                 else:
                     self._show_error("No cards were successfully generated")
@@ -595,12 +578,10 @@ class PDFExporter(ctk.CTkFrame):
         
         except Exception as e:
             self._show_error(f"Export failed: {str(e)}")
-            import traceback
             traceback.print_exc()
         finally:
             self.progress_bar.set(0)
             self.progress_label.configure(text="Ready")
-    
     def _validate_export(self) -> bool:
         """Validate export configuration"""
         if self.template_var.get() == "Select template...":
